@@ -17,6 +17,7 @@ router.post('/cart/update', cartController.updateCartQuantity);
 // Checkout & Order Routes
 router.get('/checkout', orderController.getCheckout);
 router.post('/checkout', orderController.placeOrder);
+router.post('/buy-now', orderController.buyNow);
 
 // Payment (Simulated)
 router.get('/payment/:orderId', orderController.getPaymentPage);

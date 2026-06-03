@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const User = require('../models/User');
+const Admin = require('../models/Admin');
 
 // ─── Email transporter ────────────────────────────────────────
 const transporter = nodemailer.createTransport({
@@ -52,21 +53,32 @@ const registerUser = async (req, res) => {
 // ─── Login ────────────────────────────────────────────────────
 const loginUser = async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const email = req.body.email || req.body.login_identifier;
+        const password = req.body.password || req.body.login_secret;
+
+        // Check if admin first
+        const admin = await Admin.findOne({ email });
+        if (admin) {
+            const isMatch = await bcrypt.compare(password, admin.password);
+            if (isMatch) {
+                req.session.user = null;
+                req.session.admin = { id: admin._id, email: admin.email };
+                return res.redirect('/admin/dashboard');
+            }
+        }
+
+        // If not admin, check if user
         const user = await User.findOne({ email });
-
-        if (!user) {
-            return res.render('user/login', { error: 'Invalid email or password.', title: 'Login - Evergreen Livestock' });
+        if (user) {
+            const isMatch = await bcrypt.compare(password, user.password);
+            if (isMatch) {
+                req.session.admin = null;
+                req.session.user = { id: user._id, name: user.name, email: user.email };
+                return res.redirect('/user/dashboard');
+            }
         }
 
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.render('user/login', { error: 'Invalid email or password.', title: 'Login - Evergreen Livestock' });
-        }
-
-        req.session.admin = null;
-        req.session.user = { id: user._id, name: user.name, email: user.email };
-        res.redirect('/user/dashboard');
+        return res.render('user/login', { error: 'Invalid email or password.', title: 'Login - Evergreen Livestock' });
     } catch (error) {
         console.error(error);
         res.render('user/login', { error: 'Server error during login.', title: 'Login - Evergreen Livestock' });

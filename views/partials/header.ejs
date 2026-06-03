@@ -15,9 +15,8 @@
             <li><a href="/">Home</a></li>
             <li><a href="/products">Products</a></li>
             <li><a href="/about">About</a></li>
-            <li><a href="/contact">Contact</a></li>
             <% if (user) { %>
-                <li><a href="/user/checkout">Cart</a></li>
+                <li><a href="/user/cart">Cart</a></li>
                 <li><a href="/user/dashboard">Dashboard</a></li>
             <% } %>
             <% if (admin) { %>
@@ -38,8 +37,7 @@
                     <% } %>
 
                     <% if (!admin && !user) { %>
-                        <a href="/auth/login">User Login</a>
-                        <a href="/admin/login" style="border-top: 1px solid #eee; margin-top: 5px; padding-top: 5px;">Admin Login</a>
+                        <a href="/auth/login">Login</a>
                     <% } %>
                 </div>
             </li>

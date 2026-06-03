@@ -25,31 +25,29 @@
                                         </div>
                                         
                                         <div class="checkout-item-actions">
-                                            <!-- Update Qty Form -->
-                                            <form action="/user/cart/update" method="POST" class="qty-control">
-                                                <input type="hidden" name="productId" value="<%= item.productId._id || item.productId.id %>">
-                                                <% if (item.selectedWeight) { %>
-                                                    <input type="hidden" name="selectedWeight" value="<%= item.selectedWeight %>">
-                                                <% } %>
-                                                <% if (item.productId.stock > 1) { %>
-                                                    <button type="button" class="qty-btn" onclick="this.nextElementSibling.value = Math.max(1, parseInt(this.nextElementSibling.value)-1); this.form.submit()">-</button>
-                                                    <input type="number" name="quantity" value="<%= item.quantity %>" min="1" max="<%= item.productId.stock %>" readonly>
-                                                    <button type="button" class="qty-btn" 
-                                                        onclick="this.previousElementSibling.value = Math.min(parseInt(this.previousElementSibling.value)+1, <%= item.productId.stock %>); this.form.submit()"
-                                                        <%= item.quantity >= item.productId.stock ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : '' %>>+</button>
-                                                <% } else { %>
-                                                    <span style="font-weight: 700; color: var(--text-muted); padding: 0.5rem;">Qty: 1</span>
-                                                    <input type="hidden" name="quantity" value="1">
-                                                <% } %>
-                                            </form>
+                                            <% if (cart.isBuyNow) { %>
+                                                <span style="font-weight: 700; color: var(--text-muted); padding: 0.5rem 0;">Qty: <%= item.quantity %></span>
+                                            <% } else { %>
+                                                <!-- Update Qty Form -->
+                                                <form action="/user/cart/update" method="POST" class="qty-control">
+                                                    <input type="hidden" name="itemId" value="<%= item._id || item.id %>">
+                                                    <% if (item.productId.stock > 1) { %>
+                                                        <button type="button" class="qty-btn" onclick="this.nextElementSibling.value = Math.max(1, parseInt(this.nextElementSibling.value)-1); this.form.submit()">-</button>
+                                                        <input type="number" name="quantity" value="<%= item.quantity %>" min="1" max="<%= item.productId.stock %>" readonly>
+                                                        <button type="button" class="qty-btn" 
+                                                            onclick="this.previousElementSibling.value = Math.min(parseInt(this.previousElementSibling.value)+1, <%= item.productId.stock %>); this.form.submit()"
+                                                            <%= item.quantity >= item.productId.stock ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : '' %>>+</button>
+                                                    <% } else { %>
+                                                        <span style="font-weight: 700; color: var(--text-muted); padding: 0.5rem;">Qty: 1</span>
+                                                        <input type="hidden" name="quantity" value="1">
+                                                    <% } %>
+                                                </form>
 
-                                            <form action="/user/cart/remove" method="POST">
-                                                <input type="hidden" name="productId" value="<%= item.productId._id || item.productId.id %>">
-                                                <% if (item.selectedWeight) { %>
-                                                    <input type="hidden" name="selectedWeight" value="<%= item.selectedWeight %>">
-                                                <% } %>
-                                                <button type="submit" class="remove-link" style="background:none; border:none; cursor:pointer;">Remove</button>
-                                            </form>
+                                                <form action="/user/cart/remove" method="POST">
+                                                    <input type="hidden" name="itemId" value="<%= item._id || item.id %>">
+                                                    <button type="submit" class="remove-link" style="background:none; border:none; cursor:pointer;">Remove</button>
+                                                </form>
+                                            <% } %>
                                         </div>
                                     </div>
                                     <div style="text-align: right;">
@@ -113,8 +111,7 @@
                         <h4 style="margin-bottom: 10px; color: #0056b3; font-size: 1rem;">📍 Farm Location</h4>
                         <p style="font-size: 0.95rem; color: #333; line-height: 1.5; margin: 0;">
                             <strong>Evergreen Natural Farm</strong><br>
-                            123 Green Valley Road, Countryside<br>
-                            District 45, State 67890<br>
+                            Hosali cross karwar 581306<br>
                             <em>(Please bring your order confirmation when you visit)</em>
                         </p>
                     </div>
@@ -139,9 +136,12 @@
 
                     <!-- QR Code Display Area (Hidden by default) -->
                     <div id="qrCodeContainer" style="display: none; background: #f9f9f9; padding: 1.5rem; border-radius: 12px; text-align: center; margin-bottom: 1rem; border: 1px solid #eee;">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=evergreenfarm@upi&pn=Evergreen%20Farm" alt="UPI QR Code" style="width: 150px; height: 150px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-                        <p style="font-weight: 700; color: var(--primary-green); margin-bottom: 5px;">Scan to Pay</p>
-                        <p style="font-size: 0.9rem; color: var(--text-muted);">UPI ID: <span style="font-weight: bold; color: #000;">evergreenfarm@upi</span></p>
+                        <% if (settings && settings.upiId) { %>
+                            <p style="font-weight: 700; color: var(--primary-green); margin-bottom: 5px;">Send Payment via UPI</p>
+                            <p style="font-size: 1.1rem; color: var(--text-muted);">UPI ID: <span style="font-weight: bold; color: #000;"><%= settings.upiId %></span></p>
+                        <% } else { %>
+                            <p style="color: #e74c3c; font-weight: 600;">Online payment via UPI is currently unavailable.</p>
+                        <% } %>
                     </div>
 
                     <label class="farm-option payment-option" id="offlinePaymentOption">
@@ -174,6 +174,9 @@
 
 
                     <form id="checkoutForm" action="/user/checkout" method="POST">
+                        <% if (cart.isBuyNow) { %>
+                            <input type="hidden" name="isBuyNow" value="true">
+                        <% } %>
                         <button type="submit" class="place-order-btn btn-ripple">Place Order →</button>
                     </form>
 
@@ -264,7 +267,7 @@
             document.querySelectorAll('input[name="paymentMethod"]').forEach(r => r.closest('.farm-option').classList.remove('active'));
             if(this.checked) this.closest('.farm-option').classList.add('active');
 
-            // Show/Hide QR Code
+            // Show/Hide UPI Details
             if (this.value === 'Online Payment') {
                 qrCodeContainer.style.display = 'block';
             } else {

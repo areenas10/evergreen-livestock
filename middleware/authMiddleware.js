@@ -9,7 +9,7 @@ const isAdminAuth = (req, res, next) => {
     if (req.session.admin) {
         return next();
     }
-    res.redirect('/admin/login');
+    res.redirect('/auth/login');
 };
 
 module.exports = { isUserAuth, isAdminAuth };

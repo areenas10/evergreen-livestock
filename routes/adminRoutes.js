@@ -13,7 +13,6 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 router.get('/login', adminController.getLogin);
-router.post('/login', adminController.postLogin);
 router.get('/logout', adminController.logout);
 
 router.use(isAdminAuth);
@@ -29,5 +28,8 @@ router.post('/products/delete/:id', adminController.deleteProduct);
 
 // Order Management
 router.post('/orders/update/:id', adminController.updateOrderStatus);
+
+// Settings Management
+router.post('/settings/update', adminController.updateSettings);
 
 module.exports = router;

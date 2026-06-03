@@ -1,19 +1,503 @@
 <%- include('../partials/header') %>
 
-<div class="fk-cart-container" style="min-height: 70vh;">
+<style>
+/* ═══════════════════════════════════════════════════════
+   PREMIUM CART PAGE — Evergreen Livestock
+   ═══════════════════════════════════════════════════════ */
+
+.cart-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 2rem 4rem;
+    min-height: 75vh;
+}
+
+/* ── Breadcrumb ── */
+.cart-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+}
+.cart-breadcrumb a {
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+.cart-breadcrumb a:hover { color: var(--primary-green); }
+.cart-breadcrumb .sep { opacity: 0.4; }
+.cart-breadcrumb .current { color: var(--primary-green); font-weight: 700; }
+
+/* ── Page Title ── */
+.cart-page-title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--primary-green);
+    letter-spacing: -1px;
+    margin-bottom: 0.25rem;
+}
+.cart-page-subtitle {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 2.5rem;
+}
+
+/* ── Layout ── */
+.cart-layout {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 2.5rem;
+    align-items: start;
+}
+@media (max-width: 900px) {
+    .cart-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── Cart Items List ── */
+.cart-items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.cart-item-card {
+    background: var(--white);
+    border-radius: 20px;
+    padding: 1.5rem;
+    display: flex;
+    gap: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    border: 1px solid rgba(0,0,0,0.04);
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+.cart-item-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 4px; height: 100%;
+    background: linear-gradient(to bottom, var(--accent-lime), var(--primary-green));
+    border-radius: 20px 0 0 20px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+.cart-item-card:hover {
+    box-shadow: 0 12px 35px rgba(26, 60, 52, 0.08);
+    border-color: rgba(197, 224, 99, 0.3);
+    transform: translateY(-2px);
+}
+.cart-item-card:hover::before { opacity: 1; }
+
+/* ── Image ── */
+.cart-item-image {
+    width: 140px;
+    height: 140px;
+    border-radius: 16px;
+    overflow: hidden;
+    flex-shrink: 0;
+    position: relative;
+    background: #f8f8f5;
+}
+.cart-item-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s;
+}
+.cart-item-card:hover .cart-item-image img {
+    transform: scale(1.05);
+}
+/* Slider nav arrows */
+.img-slider-btn {
+    position: absolute;
+    top: 50%; transform: translateY(-50%);
+    background: rgba(0,0,0,0.45);
+    color: #fff;
+    border: none;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 2;
+}
+.cart-item-image:hover .img-slider-btn { opacity: 1; }
+.img-slider-btn.left { left: 6px; }
+.img-slider-btn.right { right: 6px; }
+
+/* ── Item Body ── */
+.cart-item-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-width: 0;
+}
+.cart-item-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+}
+.cart-item-name {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-main);
+    line-height: 1.3;
+    margin-bottom: 0.3rem;
+}
+.cart-item-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.6rem;
+}
+.meta-tag {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 0.25rem 0.7rem;
+    border-radius: 100px;
+    background: rgba(26, 60, 52, 0.06);
+    color: var(--primary-green);
+}
+.meta-tag.weight-tag {
+    background: rgba(197, 224, 99, 0.25);
+    color: #3d6b34;
+}
+.cart-item-seller {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+.cart-item-seller strong { color: var(--primary-green); }
+
+/* ── Price ── */
+.cart-item-price-block {
+    text-align: right;
+    flex-shrink: 0;
+}
+.cart-item-price {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--primary-green);
+    line-height: 1;
+}
+.cart-item-mrp {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-decoration: line-through;
+    margin-top: 2px;
+}
+.cart-item-discount {
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #2e7d32;
+    margin-top: 2px;
+}
+
+/* ── Bottom Actions Row ── */
+.cart-item-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(0,0,0,0.04);
+}
+.qty-control-group {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: #f5f5f0;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(0,0,0,0.06);
+}
+.qty-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--primary-green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+.qty-btn:hover { background: rgba(26,60,52,0.08); }
+.qty-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.qty-value {
+    width: 38px;
+    text-align: center;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: var(--text-main);
+    border: none;
+    background: transparent;
+    -moz-appearance: textfield;
+}
+.qty-value::-webkit-inner-spin-button,
+.qty-value::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+.remove-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #c0392b;
+    padding: 0.4rem 0.8rem;
+    border-radius: 10px;
+    transition: all 0.25s;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+.remove-btn:hover {
+    background: #fef0f0;
+    color: #a93226;
+}
+
+/* ═══ RIGHT PANE — Order Summary ═══ */
+.cart-summary-pane {
+    position: sticky;
+    top: 100px;
+}
+.cart-summary-card {
+    background: var(--white);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.05);
+    border: 1px solid rgba(0,0,0,0.04);
+}
+.summary-header {
+    background: var(--primary-green);
+    color: var(--white);
+    padding: 1.25rem 1.75rem;
+    font-weight: 800;
+    font-size: 0.95rem;
+    letter-spacing: 0.3px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.summary-body {
+    padding: 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.92rem;
+    color: var(--text-main);
+}
+.summary-row .label { color: var(--text-muted); }
+.summary-row .value { font-weight: 700; }
+.summary-row .value.green { color: #2e7d32; }
+
+.summary-divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(0,0,0,0.06), transparent);
+    margin: 0.25rem 0;
+}
+
+.summary-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--primary-green);
+    padding-top: 0.5rem;
+}
+
+.summary-savings {
+    background: linear-gradient(135deg, rgba(197, 224, 99, 0.2), rgba(46, 125, 50, 0.08));
+    border-radius: 14px;
+    padding: 0.85rem 1rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #2e7d32;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.summary-footer {
+    padding: 1.25rem 1.75rem;
+    border-top: 1px solid rgba(0,0,0,0.04);
+}
+.checkout-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 1rem 2rem;
+    background: var(--primary-green);
+    color: var(--white);
+    border: none;
+    border-radius: 16px;
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.35s;
+    letter-spacing: 0.3px;
+    text-decoration: none;
+}
+.checkout-btn:hover {
+    background: #000;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    transform: translateY(-2px);
+}
+.checkout-btn .arrow {
+    font-size: 1.1rem;
+    transition: transform 0.3s;
+}
+.checkout-btn:hover .arrow { transform: translateX(4px); }
+
+.secure-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    margin-top: 1rem;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    opacity: 0.7;
+}
+
+/* Continue Shopping link */
+.continue-shopping {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 1.5rem;
+    color: var(--primary-green);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.9rem;
+    transition: gap 0.3s;
+}
+.continue-shopping:hover { gap: 0.7rem; }
+
+/* ═══ EMPTY CART ═══ */
+.empty-cart {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 5rem 2rem;
+    background: var(--white);
+    border-radius: 28px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.04);
+    border: 1px solid rgba(0,0,0,0.04);
+    max-width: 520px;
+    margin: 3rem auto;
+}
+.empty-cart-icon {
+    font-size: 5rem;
+    margin-bottom: 1.5rem;
+    opacity: 0.15;
+    filter: grayscale(100%);
+}
+.empty-cart h2 {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--primary-green);
+    margin-bottom: 0.5rem;
+}
+.empty-cart p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+    max-width: 300px;
+}
+.shop-now-btn {
+    padding: 0.9rem 2.5rem;
+    background: var(--primary-green);
+    color: var(--white);
+    border-radius: 100px;
+    text-decoration: none;
+    font-weight: 800;
+    font-size: 0.95rem;
+    transition: all 0.35s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.shop-now-btn:hover {
+    background: #000;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+    transform: translateY(-2px);
+}
+
+/* ── Responsive tweaks ── */
+@media (max-width: 600px) {
+    .cart-item-card {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1.25rem;
+    }
+    .cart-item-image {
+        width: 100%;
+        height: 180px;
+    }
+    .cart-item-top {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .cart-item-price-block {
+        text-align: left;
+    }
+    .cart-page-title { font-size: 1.5rem; }
+}
+</style>
+
+<div class="cart-page">
+    <!-- Breadcrumb -->
+    <div class="cart-breadcrumb reveal">
+        <a href="/">Home</a>
+        <span class="sep">›</span>
+        <a href="/products">Products</a>
+        <span class="sep">›</span>
+        <span class="current">Shopping Cart</span>
+    </div>
+
     <% if (cart && cart.items.length > 0) { %>
-        <!-- Left Pane: Items -->
-        <div class="fk-cart-left">
-            <div class="fk-cart-header">
-                Shopping Cart (<%= cart.items.length %> Items)
-            </div>
-            
-            <% cart.items.forEach(item => { %>
-                <% if (item.productId) { %>
-                    <% const itemMrp = parseFloat(item.price) / item.quantity * 1.63; %>
-                    <div class="fk-cart-item">
-                        <div class="fk-cart-img-box" style="position: relative; overflow: hidden; width: 250px; height: 250px; flex-shrink: 0; margin-right: 24px; text-align: center; border: 1px solid #eee; border-radius: 4px;">
-                            <% 
+        <h1 class="cart-page-title reveal">Shopping Cart</h1>
+        <p class="cart-page-subtitle reveal"><%= cart.items.length %> item<%= cart.items.length > 1 ? 's' : '' %> in your cart</p>
+
+        <div class="cart-layout">
+            <!-- ─── LEFT: Cart Items ─── -->
+            <div class="cart-items-list">
+                <% cart.items.forEach(function(item, idx) { %>
+                    <% if (item.productId) { %>
+                        <% 
+                            const unitPrice = parseFloat(item.price) / item.quantity;
+                            const fakeMrp = unitPrice * 1.63;
+                        %>
+                        <div class="cart-item-card reveal" style="animation-delay: <%= idx * 0.08 %>s;">
+                            <!-- Image -->
+                            <%
                                 let imagesArray = [];
                                 if (item.productId.images && item.productId.images.length > 0) {
                                     imagesArray = item.productId.images;
@@ -24,100 +508,129 @@
                                 } else {
                                     imagesArray = ['/images/placeholder.jpg'];
                                 }
-                                let sliderId = 'slider-' + (item.productId._id || item.productId.id);
+                                let sliderId = 'slider-' + (item._id || item.id || idx);
                             %>
-                            <div id="<%= sliderId %>" data-current="0" style="display: flex; transition: transform 0.3s ease-in-out; width: 100%; height: 100%;">
-                                <% imagesArray.forEach(imgSrc => { %>
-                                    <img src="<%= imgSrc %>" onerror="this.onerror=null; this.src='/images/placeholder.jpg'" style="min-width: 100%; height: 100%; object-fit: contain;">
-                                <% }) %>
-                            </div>
-                            
-                            <% if (imagesArray.length > 1) { %>
-                                <button type="button" onclick="slideImage('<%= sliderId %>', -1, <%= imagesArray.length %>)" style="position: absolute; left: 0; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; padding: 10px 14px; cursor: pointer; border-radius: 0 4px 4px 0;">&#10094;</button>
-                                <button type="button" onclick="slideImage('<%= sliderId %>', 1, <%= imagesArray.length %>)" style="position: absolute; right: 0; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; padding: 10px 14px; cursor: pointer; border-radius: 4px 0 0 4px;">&#10095;</button>
-                            <% } %>
-                        </div>
-                        
-                        <div class="fk-cart-details">
-                            <h3 class="fk-item-title"><%= item.productId.name %></h3>
-                            <div class="fk-seller">Seller: Evergreen Farm
-                                <% if (item.selectedWeight) { %>
-                                    | <%= item.selectedWeight %>
-                                <% } else if (item.productId.weight) { %>
-                                    | <%= item.productId.weight %>
+                            <div class="cart-item-image">
+                                <div id="<%= sliderId %>" data-current="0" style="display: flex; transition: transform 0.35s ease; width: 100%; height: 100%;">
+                                    <% imagesArray.forEach(function(imgSrc) { %>
+                                        <img src="<%= imgSrc %>" onerror="this.onerror=null; this.src='/images/placeholder.jpg'" style="min-width: 100%; height: 100%; object-fit: cover;">
+                                    <% }) %>
+                                </div>
+                                <% if (imagesArray.length > 1) { %>
+                                    <button type="button" class="img-slider-btn left" onclick="slideImage('<%= sliderId %>', -1, <%= imagesArray.length %>)">&#10094;</button>
+                                    <button type="button" class="img-slider-btn right" onclick="slideImage('<%= sliderId %>', 1, <%= imagesArray.length %>)">&#10095;</button>
                                 <% } %>
                             </div>
-                            
-                            <div class="fk-cart-price-row">
-                                <span class="fk-mrp">₹<%= itemMrp.toLocaleString('en-IN', {maximumFractionDigits:0}) %></span>
-                                <span class="fk-price">₹<%= (parseFloat(item.price) / item.quantity).toFixed(0) %></span>
-                                <span class="fk-discount">63% Off</span>
-                            </div>
 
-                            <div class="fk-cart-actions">
-                                <form action="/user/cart/update" method="POST" class="fk-qty-group">
-                                    <input type="hidden" name="productId" value="<%= item.productId.id || item.productId._id %>">
-                                    <% if (item.selectedWeight) { %>
-                                        <input type="hidden" name="selectedWeight" value="<%= item.selectedWeight %>">
-                                    <% } %>
-                                    <input type="number" name="quantity" value="<%= item.quantity %>" min="1" class="fk-qty-input">
-                                    <button type="submit" class="fk-btn-text" style="font-size: 14px;">Update</button>
-                                </form>
+                            <!-- Body -->
+                            <div class="cart-item-body">
+                                <div class="cart-item-top">
+                                    <div>
+                                        <div class="cart-item-name"><%= item.productId.name %></div>
+                                        <div class="cart-item-meta">
+                                            <% if (item.productId.category) { %>
+                                                <span class="meta-tag"><%= item.productId.category %></span>
+                                            <% } %>
+                                            <% if (item.selectedWeight) { %>
+                                                <span class="meta-tag weight-tag">⚖ <%= item.selectedWeight %></span>
+                                            <% } else if (item.productId.weight) { %>
+                                                <span class="meta-tag weight-tag">⚖ <%= item.productId.weight %></span>
+                                            <% } %>
+                                        </div>
+                                        <div class="cart-item-seller">Sold by <strong>Evergreen Farm</strong></div>
+                                    </div>
+                                    <div class="cart-item-price-block">
+                                        <div class="cart-item-price">₹<%= unitPrice.toLocaleString('en-IN', {maximumFractionDigits:0}) %></div>
+                                        <div class="cart-item-mrp">₹<%= fakeMrp.toLocaleString('en-IN', {maximumFractionDigits:0}) %></div>
+                                        <div class="cart-item-discount">63% off</div>
+                                    </div>
+                                </div>
 
-                                <form action="/user/cart/remove" method="POST">
-                                    <input type="hidden" name="productId" value="<%= item.productId.id || item.productId._id %>">
-                                    <% if (item.selectedWeight) { %>
-                                        <input type="hidden" name="selectedWeight" value="<%= item.selectedWeight %>">
-                                    <% } %>
-                                    <button type="submit" class="fk-btn-text">Remove</button>
-                                </form>
+                                <div class="cart-item-bottom">
+                                    <!-- Quantity -->
+                                    <form action="/user/cart/update" method="POST" style="margin:0;">
+                                        <input type="hidden" name="itemId" value="<%= item._id || item.id %>">
+                                        <div class="qty-control-group">
+                                            <button type="button" class="qty-btn" onclick="changeQty(this, -1)">−</button>
+                                            <input type="number" name="quantity" value="<%= item.quantity %>" min="1" class="qty-value" readonly>
+                                            <button type="button" class="qty-btn" onclick="changeQty(this, 1)">+</button>
+                                        </div>
+                                    </form>
+
+                                    <!-- Remove -->
+                                    <form action="/user/cart/remove" method="POST" style="margin:0;">
+                                        <input type="hidden" name="itemId" value="<%= item._id || item.id %>">
+                                        <button type="submit" class="remove-btn">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                            Remove
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
+                    <% } %>
+                <% }) %>
+
+                <a href="/products" class="continue-shopping">← Continue Shopping</a>
+            </div>
+
+            <!-- ─── RIGHT: Order Summary ─── -->
+            <div class="cart-summary-pane reveal" style="animation-delay: 0.2s;">
+                <div class="cart-summary-card">
+                    <div class="summary-header">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                        Order Summary
                     </div>
-                <% } %>
-            <% }) %>
-            
+                    <div class="summary-body">
+                        <div class="summary-row">
+                            <span class="label">Price (<%= cart.items.length %> item<%= cart.items.length > 1 ? 's' : '' %>)</span>
+                            <span class="value">₹<%= (cart.totalPrice * 1.63).toLocaleString('en-IN', {maximumFractionDigits:0}) %></span>
+                        </div>
+                        <div class="summary-row">
+                            <span class="label">Discount</span>
+                            <span class="value green">− ₹<%= (cart.totalPrice * 0.63).toLocaleString('en-IN', {maximumFractionDigits:0}) %></span>
+                        </div>
+                        <div class="summary-row">
+                            <span class="label">Delivery</span>
+                            <span class="value green">FREE</span>
+                        </div>
+
+                        <div class="summary-divider"></div>
+
+                        <div class="summary-total-row">
+                            <span>Total</span>
+                            <span>₹<%= cart.totalPrice.toLocaleString('en-IN', {maximumFractionDigits:0}) %></span>
+                        </div>
+
+                        <div class="summary-savings">
+                            <span>🎉</span>
+                            You save ₹<%= (cart.totalPrice * 0.63).toLocaleString('en-IN', {maximumFractionDigits:0}) %> on this order
+                        </div>
+                    </div>
+
+                    <div class="summary-footer">
+                        <a href="/user/checkout" class="checkout-btn">
+                            Proceed to Checkout
+                            <span class="arrow">→</span>
+                        </a>
+                        <div class="secure-badge">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                            SSL Secure Checkout
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        
-        <!-- Right Pane: Summary -->
-        <div class="fk-cart-right">
-            <div class="fk-summary-header">
-                <span class="fk-summary-title">Price Details</span>
-            </div>
-            <div class="fk-summary-body">
-                <div class="fk-summary-line">
-                    <span>Price (<%= cart.items.length %> items)</span>
-                    <span>₹<%= (cart.totalPrice * 1.63).toLocaleString('en-IN', {maximumFractionDigits:0}) %></span>
-                </div>
-                <div class="fk-summary-line">
-                    <span>Discount</span>
-                    <span style="color: #388e3c;">- ₹<%= (cart.totalPrice * 0.63).toLocaleString('en-IN', {maximumFractionDigits:0}) %></span>
-                </div>
-                <div class="fk-summary-line">
-                    <span>Delivery Charges</span>
-                    <span style="color: #388e3c;">Free</span>
-                </div>
-                
-                <div class="fk-summary-total">
-                    <span>Total Amount</span>
-                    <span>₹<%= cart.totalPrice.toFixed(2) %></span>
-                </div>
-                
-                <div class="fk-savings" style="margin-bottom: 20px;">
-                    You will save ₹<%= (cart.totalPrice * 0.63).toLocaleString('en-IN', {maximumFractionDigits:0}) %> on this order
-                </div>
-            </div>
-            
-            <div class="fk-place-order-wrap" style="box-shadow: 0 -2px 10px 0 rgba(0,0,0,.05); border-top: 1px solid #f0f0f0; justify-content: center;">
-                <a href="/user/checkout" class="fk-place-order-btn" style="width: 100%; text-align: center;">PLACE ORDER</a>
-            </div>
-        </div>
+
     <% } else { %>
-        <div style="width: 100%; text-align: center; background: #fff; padding: 4rem; box-shadow: 0 1px 2px 0 rgba(0,0,0,.2); border-radius: 2px;">
-            <div style="font-size: 5rem; margin-bottom: 24px; color: #ccc;">🛒</div>
-            <h2 style="font-size: 18px; font-weight: 500; margin-bottom: 12px; color: #212121;">Your cart is empty!</h2>
-            <p style="color: #878787; font-size: 14px; margin-bottom: 24px;">Add items to it now.</p>
-            <a href="/products" class="fk-place-order-btn" style="padding: 12px 36px; box-shadow: none;">Shop Now</a>
+        <!-- Empty Cart -->
+        <div class="empty-cart reveal">
+            <div class="empty-cart-icon">🛒</div>
+            <h2>Your cart is empty</h2>
+            <p>Looks like you haven't added anything to your cart yet. Explore our premium livestock collection!</p>
+            <a href="/products" class="shop-now-btn">
+                Browse Products →
+            </a>
         </div>
     <% } %>
 </div>
@@ -131,6 +644,16 @@ function slideImage(sliderId, direction, max) {
     if (current >= max) current = 0;
     slider.setAttribute('data-current', current);
     slider.style.transform = `translateX(-${current * 100}%)`;
+}
+
+function changeQty(btn, delta) {
+    const group = btn.closest('.qty-control-group');
+    const input = group.querySelector('.qty-value');
+    let val = parseInt(input.value) + delta;
+    if (val < 1) val = 1;
+    input.value = val;
+    // Auto-submit the form
+    btn.closest('form').submit();
 }
 </script>
 

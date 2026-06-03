@@ -37,8 +37,17 @@
                             ✅ Completed Orders
                         </a>
                     </li>
-                    
+                    <li>
+                        <a href="/admin/dashboard?section=cancelled_orders" class="<%= activeSection === 'cancelled_orders' ? 'active' : '' %>">
+                            ❌ Cancelled Orders
+                        </a>
+                    </li>
                     <li style="margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
+                        <a href="/admin/dashboard?section=settings" class="<%= activeSection === 'settings' ? 'active' : '' %>">
+                            ⚙️ Payment Settings
+                        </a>
+                    </li>
+                    <li style="margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
                         <a href="/" style="color: var(--accent-lime); font-weight: 800;">🌐 View Website</a>
                     </li>
                     <li style="margin-top: 0.5rem;">

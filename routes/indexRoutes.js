@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
+const Message = require('../models/Message');
 
 router.get('/', async (req, res) => {
     res.render('user/home', { title: 'Welcome to Evergreen Livestock' });
@@ -8,10 +9,6 @@ router.get('/', async (req, res) => {
 
 router.get('/about', (req, res) => {
     res.render('user/about', { title: 'About - Evergreen Livestock' });
-});
-
-router.get('/contact', (req, res) => {
-    res.render('user/contact', { title: 'Contact - Evergreen Livestock' });
 });
 
 router.get('/products', async (req, res) => {
@@ -48,8 +45,8 @@ router.get('/products', async (req, res) => {
 
 router.get('/product/:id', async (req, res) => {
     try {
-        console.log(`[DEBUG] Attempting to load product details for ID: ${req.params.id}`);
-        const product = await Product.findById(req.params.id);
+        console.log(`[DEBUG] Attempting to load product details for ID: '${req.params.id}' (length: ${req.params.id.length})`);
+        const product = await Product.findById(req.params.id.trim());
         if (!product) {
             console.log(`[DEBUG] Product with ID ${req.params.id} NOT FOUND in database.`);
             return res.redirect('/products');

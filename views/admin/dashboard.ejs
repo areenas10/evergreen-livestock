@@ -433,6 +433,98 @@
     </div>
 <% } %>
 
+<% if (activeSection === 'cancelled_orders') { %>
+    <div class="admin-card" id="cancelled-orders-section" style="margin-top: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h2 style="margin-bottom: 0; color: #c62828;">❌ Cancelled Orders History</h2>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Date/Time</th>
+                        <th>Customer</th>
+                        <th>Items</th>
+                        <th>Amount</th>
+                        <th>Payment</th>
+                        <th>Status</th>
+                        <th>Revert</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% const cancelledList = orders.filter(o => o.order_status === 'Cancelled'); %>
+                    <% if (cancelledList.length > 0) { %>
+                        <% cancelledList.forEach(order => { %>
+                            <tr>
+                                <td style="font-family: monospace; font-weight: bold; color: var(--primary-green);"><%= order.orderId || order.id.substring(0,8) %></td>
+                                <td style="font-size: 0.8rem;">
+                                    <div><%= new Date(order.createdAt).toLocaleDateString() %></div>
+                                    <div style="color: var(--text-muted);"><%= new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %></div>
+                                </td>
+                                <td style="font-weight: 500;">
+                                    <%= order.userId ? order.userId.name : 'Guest' %>
+                                    <% if (order.address) { %>
+                                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal; margin-top: 2px;"><%= order.address %></div>
+                                    <% } %>
+                                    <% if (order.phone) { %>
+                                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal; margin-top: 2px;">📞 <%= order.phone %></div>
+                                    <% } %>
+                                </td>
+                                <td style="font-size: 0.8rem; line-height: 1.4;">
+                                    <% order.items.forEach(item => { %>
+                                        <div style="margin-bottom: 2px;">
+                                            <span style="font-weight: bold;"><%= item.quantity %>x</span> 
+                                            <%= item.productId ? item.productId.name : 'Deleted Product' %> 
+                                            <span style="color: var(--text-muted);"><%= item.selectedWeight ? `(${item.selectedWeight})` : '' %></span>
+                                        </div>
+                                    <% }) %>
+                                </td>
+                                <td><div style="font-weight: bold; color: var(--primary-green);">₹<%= parseFloat(order.total_amount).toFixed(0) %></div></td>
+                                <td>
+                                    <div style="font-weight: 600; font-size: 0.85rem; margin-bottom: 4px; color: var(--primary-green);">
+                                        <%= order.payment_details && order.payment_details.method ? order.payment_details.method : 'N/A' %>
+                                    </div>
+                                    <span class="badge badge-pending"><%= order.payment_status %></span>
+                                </td>
+                                <td><span class="badge badge-cancelled">CANCELLED</span></td>
+                                <td>
+                                    <form action="/admin/orders/update/<%= order.id %>" method="POST" style="display: flex; gap: 0.5rem;">
+                                        <input type="hidden" name="orderStatus" value="Pending">
+                                        <button type="submit" class="btn btn-secondary" style="padding: 0.25rem 0.7rem; font-size: 0.8rem; background: #eee; color: #666;">Move to Pending</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr><td colspan="8" style="text-align: center; padding: 2rem; color: var(--text-muted);">No cancelled orders.</td></tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+<% } %>
+
+<% if (activeSection === 'settings') { %>
+    <div class="admin-card" style="box-shadow: var(--shadow-soft); border-radius: var(--radius); max-width: 800px; margin: 0 auto;">
+        <h2>⚙️ Payment & Global Settings</h2>
+        <p style="color: var(--text-muted); margin-bottom: 2rem;">Configure the payment methods and details shown to customers during checkout.</p>
+        
+        <form action="/admin/settings/update" method="POST">
+            <div style="background: #f9fbf9; padding: 1.5rem; border-radius: 12px; border: 1px solid #e0e8e0; margin-bottom: 1.5rem;">
+                <h3 style="margin-bottom: 1rem; color: var(--primary-green); font-size: 1.1rem;">📱 UPI Details</h3>
+                <div class="form-group">
+                    <label>UPI ID (e.g. yourname@upi)</label>
+                    <input type="text" name="upiId" value="<%= settings ? settings.upiId : '' %>" placeholder="Enter UPI ID">
+                    <small style="color: var(--text-muted); font-size: 0.8rem; margin-top: 4px; display: block;">This will automatically be shown to users as the UPI ID to send payment to.</small>
+                </div>
+            </div>
+
+            <button type="submit" class="btn" style="width: 100%; border-radius: 12px; height: 50px; font-size: 1rem;">Save Settings</button>
+        </form>
+    </div>
+<% } %>
+
 <!-- Edit Product Modal -->
 <div id="editModal" class="modal">
     <div class="modal-content">

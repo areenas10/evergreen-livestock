@@ -1,35 +1,16 @@
 const Admin = require('../models/Admin');
 const Product = require('../models/Product');
 const Order = require('../models/Order');
+const Settings = require('../models/Settings');
 const bcrypt = require('bcryptjs');
 
 const getLogin = (req, res) => {
-    res.render('admin/login', { title: 'Admin Login', error: null });
-};
-
-const postLogin = async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        
-        const admin = await Admin.findOne({ email });
-        
-        if (!admin) return res.render('admin/login', { title: 'Admin Login', error: 'Invalid credentials' });
-        
-        const isMatch = await bcrypt.compare(password, admin.password);
-        if (!isMatch) return res.render('admin/login', { title: 'Admin Login', error: 'Invalid credentials' });
-
-        req.session.user = null; // Log out any existing user session
-        req.session.admin = { id: admin._id, email: admin.email };
-        res.redirect('/admin/dashboard');
-    } catch (err) {
-        console.error(err);
-        res.render('admin/login', { title: 'Admin Login', error: 'Server error' });
-    }
+    res.redirect('/auth/login');
 };
 
 const logout = (req, res) => {
     req.session.destroy(() => {
-        res.redirect('/admin/login');
+        res.redirect('/auth/login');
     });
 };
 
@@ -56,6 +37,12 @@ const getDashboard = async (req, res) => {
             .populate('items.productId')
             .sort({ createdAt: -1 });
 
+        // Fetch settings
+        let settings = await Settings.findOne();
+        if (!settings) {
+            settings = await Settings.create({});
+        }
+
         const section = req.query.section || 'overview';
 
         res.render('admin/dashboard', { 
@@ -66,11 +53,12 @@ const getDashboard = async (req, res) => {
             outOfStockCount,
             products: products || [],
             orders: orders || [],
+            settings,
             activeSection: section
         });
     } catch (err) {
         console.error(err);
-        res.redirect('/admin/login');
+        res.redirect('/auth/login');
     }
 };
 
@@ -207,6 +195,39 @@ const updateOrderStatus = async (req, res) => {
         const order = await Order.findById(req.params.id);
         if (!order) return res.redirect(req.get('Referrer') || '/admin/dashboard');
 
+        const oldStatus = order.order_status;
+
+        // Restore or deduct stock based on cancellation changes
+        if (orderStatus === 'Cancelled' && oldStatus !== 'Cancelled') {
+            for (const item of order.items) {
+                const product = await Product.findById(item.productId);
+                if (product) {
+                    if (product.weightVariants && product.weightVariants.length > 0 && item.selectedWeight) {
+                        const variantIndex = product.weightVariants.findIndex(v => v.weight === item.selectedWeight);
+                        if (variantIndex > -1) {
+                            product.weightVariants[variantIndex].stock = (product.weightVariants[variantIndex].stock || 0) + item.quantity;
+                        }
+                    }
+                    product.stock = (product.stock || 0) + item.quantity;
+                    await product.save();
+                }
+            }
+        } else if (oldStatus === 'Cancelled' && orderStatus !== 'Cancelled') {
+            for (const item of order.items) {
+                const product = await Product.findById(item.productId);
+                if (product) {
+                    if (product.weightVariants && product.weightVariants.length > 0 && item.selectedWeight) {
+                        const variantIndex = product.weightVariants.findIndex(v => v.weight === item.selectedWeight);
+                        if (variantIndex > -1) {
+                            product.weightVariants[variantIndex].stock = Math.max(0, (product.weightVariants[variantIndex].stock || 0) - item.quantity);
+                        }
+                    }
+                    product.stock = Math.max(0, (product.stock || 0) - item.quantity);
+                    await product.save();
+                }
+            }
+        }
+
         let updateData = { order_status: orderStatus };
 
         // If admin provides paymentMethod/paymentStatus from the UI, respect those
@@ -252,13 +273,33 @@ const updateOrderStatus = async (req, res) => {
     }
 };
 
+const updateSettings = async (req, res) => {
+    try {
+        const { upiId } = req.body;
+        
+        let settings = await Settings.findOne();
+        if (!settings) {
+            settings = new Settings();
+        }
+        
+        settings.upiId = upiId;
+        settings.updatedAt = Date.now();
+        
+        await settings.save();
+        res.redirect('/admin/dashboard?section=settings');
+    } catch (err) {
+        console.error(err);
+        res.redirect('/admin/dashboard?section=settings');
+    }
+};
+
 module.exports = {
     getLogin,
-    postLogin,
     logout,
     getDashboard,
     addProduct,
     editProduct,
     deleteProduct,
-    updateOrderStatus
+    updateOrderStatus,
+    updateSettings
 };

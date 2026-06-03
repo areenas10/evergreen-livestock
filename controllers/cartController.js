@@ -26,7 +26,10 @@ const getCart = async (req, res) => {
             totalPrice: cart.total_price
         };
 
-        res.redirect('/user/checkout');
+        res.render('user/cart', {
+            title: 'Your Cart - Evergreen Livestock',
+            cart: cartData
+        });
     } catch (err) {
         console.error(err);
         res.redirect('/user/dashboard');
@@ -76,29 +79,14 @@ const addToCart = async (req, res) => {
                 const itemStock = variant ? variant.stock : product.stock;
                 const itemWeight = variant ? variant.weight : product.weight;
 
-                // Find if this specific variant is already in the cart
-                const itemIndex = cart.items.findIndex(item => 
-                    item.productId.toString() === productId && item.selectedWeight === itemWeight
-                );
-
-                if (itemIndex > -1) {
-                    const currentQty = cart.items[itemIndex].quantity;
-                    const availableToAdd = itemStock - currentQty;
-                    
-                    if (availableToAdd > 0) {
-                        cart.items[itemIndex].quantity += 1;
-                        cart.items[itemIndex].price = itemPrice * cart.items[itemIndex].quantity;
-                    }
-                } else {
-                    if (itemStock > 0) {
-                        cart.items.push({
-                            productId: productId,
-                            quantity: 1,
-                            price: itemPrice,
-                            image: itemImage,
-                            selectedWeight: itemWeight
-                        });
-                    }
+                if (itemStock > 0) {
+                    cart.items.push({
+                        productId: productId,
+                        quantity: 1,
+                        price: itemPrice,
+                        image: itemImage,
+                        selectedWeight: itemWeight
+                    });
                 }
             }
         } else {
@@ -158,7 +146,7 @@ const addToCart = async (req, res) => {
         
         await cart.save();
 
-        res.redirect('/user/checkout');
+        res.redirect('/user/cart');
     } catch (err) {
         console.error(err);
         res.redirect('/products');
@@ -167,43 +155,51 @@ const addToCart = async (req, res) => {
 
 const removeFromCart = async (req, res) => {
     try {
-        const { productId, selectedWeight } = req.body;
+        const { itemId, productId, selectedWeight } = req.body;
         const userId = req.session.user.id;
 
         const cart = await Cart.findOne({ userId });
         if (cart) {
-            cart.items = cart.items.filter(item => 
-                !(item.productId.toString() === productId && item.selectedWeight === selectedWeight)
-            );
+            if (itemId) {
+                cart.items = cart.items.filter(item => item._id.toString() !== itemId);
+            } else {
+                cart.items = cart.items.filter(item => 
+                    !(item.productId.toString() === productId && item.selectedWeight === selectedWeight)
+                );
+            }
             
             // Recalculate total
             cart.total_price = cart.items.reduce((acc, item) => acc + (item.price || 0), 0);
             cart.updatedAt = Date.now();
             await cart.save();
         }
-        res.redirect('/user/checkout');
+        res.redirect('/user/cart');
     } catch (err) {
         console.error(err);
-        res.redirect('/user/checkout');
+        res.redirect('/user/cart');
     }
 };
 
 const updateCartQuantity = async (req, res) => {
     try {
-        const { productId, quantity, selectedWeight } = req.body;
+        const { itemId, productId, quantity, selectedWeight } = req.body;
         const userId = req.session.user.id;
         const itemQuantity = parseInt(quantity);
 
         const cart = await Cart.findOne({ userId });
         if (cart && itemQuantity > 0) {
-            const product = await Product.findById(productId);
-            // Identify by both productId and selectedWeight
-            const itemIndex = cart.items.findIndex(item => 
-                item.productId.toString() === productId && item.selectedWeight === selectedWeight
-            );
+            let itemIndex = -1;
+            if (itemId) {
+                itemIndex = cart.items.findIndex(item => item._id.toString() === itemId);
+            } else {
+                itemIndex = cart.items.findIndex(item => 
+                    item.productId.toString() === productId && item.selectedWeight === selectedWeight
+                );
+            }
             
             if (itemIndex > -1) {
                 const item = cart.items[itemIndex];
+                const product = await Product.findById(item.productId);
                 
                 // Find matching variant based on stored weight
                 let variant = null;
@@ -226,10 +222,10 @@ const updateCartQuantity = async (req, res) => {
                 await cart.save();
             }
         }
-        res.redirect('/user/checkout');
+        res.redirect('/user/cart');
     } catch (err) {
         console.error(err);
-        res.redirect('/user/checkout');
+        res.redirect('/user/cart');
     }
 };
 

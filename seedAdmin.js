@@ -8,7 +8,7 @@ const seedAdmin = async () => {
     try {
         await connectDB();
 
-        const email = 'admin@evergreen.farm';
+        const email = 'adminlivestock@gmail.com';
         const password = 'admin123';
 
         // Check if admin exists
@@ -25,7 +25,7 @@ const seedAdmin = async () => {
         const newAdmin = new Admin({ email, password: hashedPassword });
         await newAdmin.save();
 
-        console.log('Admin account created successfully in MongoDB: admin@evergreen.farm / admin123');
+        console.log('Admin account created successfully in MongoDB: adminlivestock@gmail.com / admin123');
         await mongoose.connection.close();
         process.exit();
     } catch (error) {

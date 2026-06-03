@@ -173,7 +173,7 @@
                     </button>
                 </form>
 
-                <form action="/user/cart/add" method="POST" style="flex: 1; align-self: flex-end;" id="buyNowForm">
+                <form action="/user/buy-now" method="POST" style="flex: 1; align-self: flex-end;" id="buyNowForm">
                     <input type="hidden" name="productId" value="<%= product._id || product.id %>">
                     <div id="selectedVariantsContainerBuy">
                         <input type="hidden" name="selectedVariantIndexes" value="0">
