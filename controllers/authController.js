@@ -74,7 +74,9 @@ const loginUser = async (req, res) => {
             if (isMatch) {
                 req.session.admin = null;
                 req.session.user = { id: user._id, name: user.name, email: user.email };
-                return res.redirect('/user/dashboard');
+                const redirectTo = req.session.returnTo || '/user/dashboard';
+                delete req.session.returnTo;
+                return res.redirect(redirectTo);
             }
         }
 
