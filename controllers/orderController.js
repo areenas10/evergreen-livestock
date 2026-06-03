@@ -22,7 +22,7 @@ const getUserDashboard = async (req, res) => {
 
 const getCheckout = async (req, res) => {
     try {
-        const userId = req.session.user.id;
+        const userId = req.session.user ? req.session.user.id : null;
         
         let cartData = { items: [], totalPrice: 0, totalDeliveryCharge: 0, isBuyNow: false };
 
@@ -94,7 +94,7 @@ const getCheckout = async (req, res) => {
                     isBuyNow: true
                 };
             }
-        } else {
+        } else if (userId) {
             const cart = await Cart.findOne({ userId }).populate('items.productId');
 
             if (cart && cart.items.length > 0) {
@@ -136,7 +136,7 @@ const getCheckout = async (req, res) => {
         let settings = await Settings.findOne();
         if (!settings) settings = { upiId: '', bankName: '', accountNumber: '', ifscCode: '', accountHolderName: '' };
 
-        res.render('user/checkout', { title: 'Checkout', cart: cartData, settings });
+        res.render('user/checkout', { title: 'Checkout', cart: cartData, settings, isLoggedIn: !!req.session.user });
     } catch (err) {
         console.error(err);
         res.redirect('/user/cart');
@@ -145,8 +145,8 @@ const getCheckout = async (req, res) => {
 
 const placeOrder = async (req, res) => {
     try {
-        const { deliveryMethod, paymentMethod, isBuyNow } = req.body;
-        const userId = req.session.user.id;
+        const { deliveryMethod, paymentMethod, isBuyNow, customerName, customerEmail } = req.body;
+        const userId = req.session.user ? req.session.user.id : null;
         const isBuyNowFlow = (isBuyNow === 'true' && req.session.buyNowItem);
 
         let orderItems = [];
@@ -236,21 +236,30 @@ const placeOrder = async (req, res) => {
         const generatedOrderId = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
 
         // Create order
-        const newOrder = new Order({
+        const orderData = {
             orderId: generatedOrderId,
-            userId: userId,
             items: orderItems,
             total_amount: finalTotalAmount,
             delivery_method: deliveryMethod,
             address: req.body.address,
             phone: req.body.phone,
-            payment_status: 'Pending', // All orders start as Pending until manual/admin confirmation
+            payment_status: 'Pending',
             order_status: 'Pending',
             payment_details: {
                 method: paymentMethod || 'Not specified',
                 status: 'Pending'
             }
-        });
+        };
+
+        // Attach user ID for logged-in users, or guest info for guests
+        if (userId) {
+            orderData.userId = userId;
+        } else {
+            orderData.customerName = customerName || 'Guest';
+            orderData.customerEmail = customerEmail || '';
+        }
+
+        const newOrder = new Order(orderData);
 
         const savedOrder = await newOrder.save();
 
@@ -272,7 +281,7 @@ const placeOrder = async (req, res) => {
         // Clear cart or session
         if (isBuyNowFlow) {
             delete req.session.buyNowItem;
-        } else {
+        } else if (userId) {
             const cart = await Cart.findOne({ userId });
             if (cart) {
                 cart.items = [];
@@ -281,7 +290,12 @@ const placeOrder = async (req, res) => {
             }
         }
 
-        res.redirect(`/user/dashboard`);
+        // Redirect logged-in users to dashboard, guests to a confirmation page
+        if (userId) {
+            res.redirect('/user/dashboard');
+        } else {
+            res.redirect(`/user/payment/${savedOrder._id}?guest=true`);
+        }
     } catch (err) {
         console.error(err);
         res.redirect('/user/checkout');
@@ -291,7 +305,6 @@ const placeOrder = async (req, res) => {
 const buyNow = async (req, res) => {
     try {
         const { productId, selectedVariantIndexes, selectedVariantIndex, quantity } = req.body;
-        const userId = req.session.user.id;
 
         // Get product
         const product = await Product.findById(productId);
@@ -354,14 +367,18 @@ const buyNow = async (req, res) => {
 const getPaymentPage = async (req, res) => {
     try {
         const order = await Order.findById(req.params.orderId);
+        if (!order) return res.redirect('/');
 
-        if (!order || order.userId.toString() !== req.session.user.id) {
-            return res.redirect('/user/dashboard');
+        // Allow access for guests (via query param) or matching logged-in user
+        const isGuest = req.query.guest === 'true';
+        const isOwner = req.session.user && order.userId && order.userId.toString() === req.session.user.id;
+        if (!isGuest && !isOwner) {
+            return res.redirect('/');
         }
         res.render('user/payment', { title: 'Payment', order });
     } catch (err) {
         console.error(err);
-        res.redirect('/user/dashboard');
+        res.redirect('/');
     }
 };
 

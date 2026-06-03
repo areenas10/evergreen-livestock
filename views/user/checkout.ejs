@@ -65,6 +65,22 @@
                 </div>
             </div>
 
+            <!-- Guest Info (shown only for non-logged-in users) -->
+            <% if (!isLoggedIn) { %>
+            <div class="checkout-module">
+                <div class="checkout-module-header">
+                    <span>👤 Your Details</span>
+                </div>
+                <div class="checkout-module-body">
+                    <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 1rem;">Tell us who you are so we can process your order.</p>
+                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                        <input type="text" name="customerName" form="checkoutForm" placeholder="Your full name" required style="width: 100%; padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px; font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--primary-green)'" onblur="this.style.borderColor='#e0e0e0'">
+                        <input type="email" name="customerEmail" form="checkoutForm" placeholder="Email address (optional)" style="width: 100%; padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px; font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--primary-green)'" onblur="this.style.borderColor='#e0e0e0'">
+                    </div>
+                </div>
+            </div>
+            <% } %>
+
             <!-- Contact Details -->
             <div class="checkout-module">
                 <div class="checkout-module-header">
