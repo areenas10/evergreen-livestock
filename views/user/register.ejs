@@ -1,0 +1,213 @@
+<%- include('../partials/header') %>
+
+<style>
+  .auth-fullscreen {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(rgba(13, 31, 27, 0.6), rgba(13, 31, 27, 0.7)), url('/images/hero_banner.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .auth-glass-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 30px;
+    padding: 3rem;
+    width: 100%;
+    max-width: 550px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+    position: relative;
+    z-index: 10;
+    transform: translateY(20px);
+    opacity: 0;
+    animation: authFadeUp 0.8s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+  }
+
+  @keyframes authFadeUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .auth-logo-leaf {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #1a3c34, #27ae60);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin: 0 auto 1rem auto;
+    box-shadow: 0 10px 20px rgba(26, 60, 52, 0.3);
+  }
+
+  .auth-glass-card h2 {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #1a3c34;
+    text-align: center;
+    margin-bottom: 0.5rem;
+    letter-spacing: -1px;
+  }
+
+  .auth-subtitle {
+    text-align: center;
+    color: #5c6b6b;
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+  }
+
+  .auth-error {
+    background: rgba(231, 76, 60, 0.1);
+    border: 1px solid rgba(231, 76, 60, 0.3);
+    color: #c0392b;
+    padding: 1rem;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .auth-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .auth-input-group {
+    position: relative;
+    margin-bottom: 1.2rem;
+  }
+
+  .auth-input-group input {
+    width: 100%;
+    padding: 1rem 1.2rem;
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-family: 'Outfit', sans-serif;
+    color: #2c3333;
+    transition: all 0.3s ease;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+  }
+
+  .auth-input-group input:focus {
+    outline: none;
+    border-color: #c5e063;
+    background: white;
+    box-shadow: 0 0 0 5px rgba(197, 224, 99, 0.2);
+  }
+
+  .auth-input-group label {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: #1a3c34;
+    margin-bottom: 0.5rem;
+    padding-left: 0.2rem;
+    display: block;
+    text-align: left;
+  }
+
+  .auth-submit {
+    width: 100%;
+    padding: 1.2rem;
+    background: linear-gradient(135deg, #1a3c34, #2d6a55);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 800;
+    font-family: 'Outfit', sans-serif;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    margin-top: 0.5rem;
+    box-shadow: 0 10px 20px rgba(26, 60, 52, 0.2);
+  }
+
+  .auth-submit:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 30px rgba(26, 60, 52, 0.3);
+    background: linear-gradient(135deg, #0d1f1b, #1a3c34);
+  }
+
+  .auth-links {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+    color: #5c6b6b;
+  }
+
+  .auth-links a {
+    color: #1a3c34;
+    font-weight: 800;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .auth-links a:hover {
+    color: #27ae60;
+  }
+
+  @media (max-width: 600px) {
+    .auth-form-grid { grid-template-columns: 1fr; gap: 0; }
+  }
+</style>
+
+<div class="auth-fullscreen">
+  <div class="auth-glass-card">
+    <div class="auth-logo-leaf">🌿</div>
+    <h2>User Registration</h2>
+    <p class="auth-subtitle">Create your account for premium livestock access.</p>
+
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div class="auth-error"><%= error %></div>
+    <% } %>
+
+    <form action="/auth/register" method="POST">
+      <div class="auth-form-grid">
+        <div class="auth-input-group">
+          <label for="name">Full Name</label>
+          <input type="text" id="name" name="name" autocomplete="name" readonly onfocus="this.removeAttribute('readonly');" required>
+        </div>
+        <div class="auth-input-group">
+          <label for="phone">Phone Number</label>
+          <input type="text" id="phone" name="phone" autocomplete="tel" readonly onfocus="this.removeAttribute('readonly');" required>
+        </div>
+      </div>
+
+      <div class="auth-input-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" name="email" autocomplete="email" readonly onfocus="this.removeAttribute('readonly');" required>
+      </div>
+
+      <div class="auth-form-grid">
+        <div class="auth-input-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly');" required>
+        </div>
+        <div class="auth-input-group">
+          <label for="confirmPassword">Confirm Password</label>
+          <input type="password" id="confirmPassword" name="confirmPassword" autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly');" required>
+        </div>
+      </div>
+
+      <button type="submit" class="auth-submit">Create Account</button>
+    </form>
+
+    <div class="auth-links">
+      <p>Already a member? <a href="/auth/login">Sign in here</a></p>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

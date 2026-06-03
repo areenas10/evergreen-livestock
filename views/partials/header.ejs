@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title || 'Evergreen Livestock | Premium Livestock Selection' %></title>
+    <meta name="description" content="A premium livestock marketplace for organically-raised animals and high-quality farm products.">
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav>
+        <a href="/" class="logo">Evergreen Livestock</a>
+        <ul class="nav-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="/products">Products</a></li>
+            <li><a href="/about">About</a></li>
+            <li><a href="/contact">Contact</a></li>
+            <% if (user) { %>
+                <li><a href="/user/checkout">Cart</a></li>
+                <li><a href="/user/dashboard">Dashboard</a></li>
+            <% } %>
+            <% if (admin) { %>
+                <li><a href="/admin/dashboard" style="color: #27ae60; font-weight: 800;">Admin Dashboard</a></li>
+            <% } %>
+
+            <li class="dropdown">
+                <a href="#" class="btn btn-secondary"><%= (user || admin) ? 'Portal' : 'Login' %> ▼</a>
+                <div class="dropdown-content">
+                    <% if (admin) { %>
+                        <a href="/admin/dashboard" style="color: #27ae60; font-weight: 800; border-bottom: 1px solid #eee; margin-bottom: 5px; padding-bottom: 10px;">🛡️ Admin Panel</a>
+                        <a href="/admin/logout" style="color: #e74c3c;">Admin Logout</a>
+                    <% } %>
+
+                    <% if (user) { %>
+                        <a href="/user/dashboard">My Dashboard</a>
+                        <a href="/auth/logout" style="color: #e74c3c;">User Logout</a>
+                    <% } %>
+
+                    <% if (!admin && !user) { %>
+                        <a href="/auth/login">User Login</a>
+                        <a href="/admin/login" style="border-top: 1px solid #eee; margin-top: 5px; padding-top: 5px;">Admin Login</a>
+                    <% } %>
+                </div>
+            </li>
+        </ul>
+    </nav>
+    <main>

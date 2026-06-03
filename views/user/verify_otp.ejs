@@ -1,0 +1,123 @@
+<%- include('../partials/header') %>
+
+<style>
+  .auth-fullscreen {
+    min-height: 100vh; display: flex; justify-content: center; align-items: center;
+    background: linear-gradient(rgba(13,31,27,0.6), rgba(13,31,27,0.7)), url('/images/hero_banner.png');
+    background-size: cover; background-position: center; background-attachment: fixed;
+    padding: 2rem; position: relative; overflow: hidden;
+  }
+  .auth-glass-card {
+    background: rgba(255,255,255,0.88); backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.5);
+    border-radius: 20px; padding: 2.2rem; width: 100%; max-width: 450px;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.2); position: relative; z-index: 10;
+    animation: authFadeUp 0.8s cubic-bezier(0.165,0.84,0.44,1) forwards;
+    opacity: 0; transform: translateY(20px);
+  }
+  @keyframes authFadeUp { to { opacity:1; transform:translateY(0); } }
+  .auth-logo-leaf {
+    width: 50px; height: 50px; background: linear-gradient(135deg,#1a3c34,#27ae60);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; margin: 0 auto 0.8rem auto; box-shadow: 0 5px 15px rgba(26,60,52,0.25);
+  }
+  .auth-glass-card h2 { font-size: 1.7rem; font-weight: 800; color: #1a3c34; text-align: center; margin-bottom: 0.3rem; }
+  .auth-subtitle { text-align:center; color:#5c6b6b; font-size:0.9rem; margin-bottom:1.5rem; }
+  .auth-error {
+    background: rgba(231,76,60,0.1); border: 1px solid rgba(231,76,60,0.3);
+    color: #c0392b; padding: 0.8rem; border-radius: 10px;
+    font-size: 0.85rem; margin-bottom: 1rem; font-weight: 600; text-align: center;
+  }
+  .auth-input-group { margin-bottom: 1.5rem; }
+  .auth-input-group label {
+    font-size: 0.85rem; font-weight: 800; color: #1a3c34;
+    display: block; margin-bottom: 0.8rem; text-align: center;
+  }
+  .otp-inputs { display: flex; justify-content: space-between; gap: 10px; }
+  .otp-inputs input {
+    width: 45px; height: 55px; border: 2px solid #ddd; border-radius: 10px;
+    text-align: center; font-size: 1.5rem; font-weight: 800; color: #1a3c34;
+    background: rgba(255,255,255,0.9); transition: all 0.3s ease;
+  }
+  .otp-inputs input:focus { border-color: #27ae60; outline: none; box-shadow: 0 0 10px rgba(39,174,96,0.1); }
+  .auth-submit {
+    width: 100%; padding: 1rem;
+    background: linear-gradient(135deg,#1a3c34,#2d6a55);
+    color: white; border: none; border-radius: 12px;
+    font-size: 1rem; font-weight: 800; font-family: 'Outfit', sans-serif;
+    cursor: pointer; transition: all 0.3s ease; margin-top: 1rem;
+    box-shadow: 0 8px 15px rgba(26,60,52,0.15);
+  }
+  .auth-submit:hover { transform: translateY(-2px); box-shadow: 0 12px 20px rgba(26,60,52,0.25); }
+  .auth-links { text-align:center; margin-top:1.5rem; font-size:0.9rem; color:#5c6b6b; }
+  .auth-links a { color:#1a3c34; font-weight:800; text-decoration:none; }
+</style>
+
+<div class="auth-fullscreen">
+  <div class="auth-glass-card">
+    <div class="auth-logo-leaf">🌿</div>
+    <h2>Verify OTP</h2>
+    <p class="auth-subtitle">We've sent a 6-digit code to <strong><%= email %></strong></p>
+
+    <% if (error) { %>
+      <div class="auth-error"><%= error %></div>
+    <% } %>
+
+    <form action="/auth/verify-otp" method="POST" id="otpForm">
+      <div class="auth-input-group">
+        <label>Enter 6-Digit Code</label>
+        <div class="otp-inputs">
+          <input type="text" maxlength="1" pattern="\d*" inputmode="numeric" required>
+          <input type="text" maxlength="1" pattern="\d*" inputmode="numeric" required>
+          <input type="text" maxlength="1" pattern="\d*" inputmode="numeric" required>
+          <input type="text" maxlength="1" pattern="\d*" inputmode="numeric" required>
+          <input type="text" maxlength="1" pattern="\d*" inputmode="numeric" required>
+          <input type="text" maxlength="1" pattern="\d*" inputmode="numeric" required>
+        </div>
+        <input type="hidden" name="otp" id="fullOtp">
+      </div>
+      <button type="submit" class="auth-submit">Verify OTP</button>
+    </form>
+
+    <div class="auth-links">
+      <p>Didn't receive it? <a href="/auth/forgot-password">Resend Code</a></p>
+    </div>
+  </div>
+</div>
+
+<script>
+  const inputs = document.querySelectorAll('.otp-inputs input');
+  const fullOtpInput = document.getElementById('fullOtp');
+  const form = document.getElementById('otpForm');
+
+  inputs.forEach((input, index) => {
+    input.addEventListener('input', (e) => {
+      if (e.target.value.length > 0 && index < inputs.length - 1) {
+        inputs[index + 1].focus();
+      }
+      updateFullOtp();
+    });
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace' && e.target.value.length === 0 && index > 0) {
+        inputs[index - 1].focus();
+      }
+    });
+  });
+
+  function updateFullOtp() {
+    let otp = "";
+    inputs.forEach(input => otp += input.value);
+    fullOtpInput.value = otp;
+  }
+
+  form.addEventListener('submit', (e) => {
+    updateFullOtp();
+    if (fullOtpInput.value.length !== 6) {
+      e.preventDefault();
+      alert("Please enter all 6 digits.");
+    }
+  });
+</script>
+
+<%- include('../partials/footer') %>

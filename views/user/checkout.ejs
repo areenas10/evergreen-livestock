@@ -1,0 +1,310 @@
+<%- include('../partials/header') %>
+
+<div class="container">
+    <h1 class="reveal" style="font-size: 2.5rem; font-weight: 800; color: var(--primary-green); margin-bottom: 2rem; letter-spacing: -1px;">Secure Checkout</h1>
+
+    <div class="checkout-wrapper">
+        <!-- LEFT COLUMN: Cart Management & Delivery -->
+        <div class="checkout-left reveal" style="animation-delay: 0.1s;">
+            
+            <!-- Step 1: Manage Your Selection -->
+            <div class="checkout-module">
+                <div class="checkout-module-header">
+                    <span>🛒 Review Items (<%= cart.items.length %>)</span>
+                </div>
+                <div class="checkout-module-body">
+                    <% if (cart && cart.items.length > 0) { %>
+                        <% cart.items.forEach(item => { %>
+                            <% if (item.productId) { %>
+                                <div class="checkout-item">
+                                    <img src="<%= item.displayImage || item.productId.image || '/images/placeholder.jpg' %>" class="checkout-item-img" onerror="this.src='/images/placeholder.jpg'; this.style.opacity='0.3';">
+                                    <div class="checkout-item-info">
+                                        <h3 class="checkout-item-title"><%= item.productId.name %></h3>
+                                        <div class="checkout-item-meta">
+                                            <%= item.selectedWeight || item.productId.weight %> • Evergreen Natural Farm
+                                        </div>
+                                        
+                                        <div class="checkout-item-actions">
+                                            <!-- Update Qty Form -->
+                                            <form action="/user/cart/update" method="POST" class="qty-control">
+                                                <input type="hidden" name="productId" value="<%= item.productId._id || item.productId.id %>">
+                                                <% if (item.selectedWeight) { %>
+                                                    <input type="hidden" name="selectedWeight" value="<%= item.selectedWeight %>">
+                                                <% } %>
+                                                <% if (item.productId.stock > 1) { %>
+                                                    <button type="button" class="qty-btn" onclick="this.nextElementSibling.value = Math.max(1, parseInt(this.nextElementSibling.value)-1); this.form.submit()">-</button>
+                                                    <input type="number" name="quantity" value="<%= item.quantity %>" min="1" max="<%= item.productId.stock %>" readonly>
+                                                    <button type="button" class="qty-btn" 
+                                                        onclick="this.previousElementSibling.value = Math.min(parseInt(this.previousElementSibling.value)+1, <%= item.productId.stock %>); this.form.submit()"
+                                                        <%= item.quantity >= item.productId.stock ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : '' %>>+</button>
+                                                <% } else { %>
+                                                    <span style="font-weight: 700; color: var(--text-muted); padding: 0.5rem;">Qty: 1</span>
+                                                    <input type="hidden" name="quantity" value="1">
+                                                <% } %>
+                                            </form>
+
+                                            <form action="/user/cart/remove" method="POST">
+                                                <input type="hidden" name="productId" value="<%= item.productId._id || item.productId.id %>">
+                                                <% if (item.selectedWeight) { %>
+                                                    <input type="hidden" name="selectedWeight" value="<%= item.selectedWeight %>">
+                                                <% } %>
+                                                <button type="submit" class="remove-link" style="background:none; border:none; cursor:pointer;">Remove</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <div style="font-size: 1.25rem; font-weight: 800; color: var(--primary-green);">₹<%= parseFloat(item.price).toFixed(0) %></div>
+                                    </div>
+                                </div>
+                            <% } %>
+                        <% }) %>
+                    <% } else { %>
+                        <div style="text-align: center; padding: 2rem;">
+                            <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Your cart is currently empty.</p>
+                            <a href="/products" class="btn btn-ripple">Explore Marketplace</a>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Contact Details -->
+            <div class="checkout-module">
+                <div class="checkout-module-header">
+                    <span>📞 Contact Details</span>
+                </div>
+                <div class="checkout-module-body">
+                    <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 1rem;">We'll use this to update you on your order.</p>
+                    <input type="tel" name="phone" form="checkoutForm" placeholder="Enter your 10-digit mobile number" required pattern="[0-9]{10}" title="Please enter a valid 10-digit phone number" style="width: 100%; padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px; font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--primary-green)'" onblur="this.style.borderColor='#e0e0e0'">
+                </div>
+            </div>
+
+            <!-- Step 2: Delivery Selection -->
+            <div class="checkout-module">
+                <div class="checkout-module-header">
+                    <span>🚚 Delivery & Logistic Method</span>
+                </div>
+                <div class="checkout-module-body">
+                    <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 2rem;">Choose how you'd like to receive your items.</p>
+                    
+                    <label class="farm-option" id="homeDeliveryOption">
+                        <input type="radio" name="deliveryMethod" value="Home Delivery" form="checkoutForm" required>
+                        <div class="option-content">
+                            <h4>🏠 Home Delivery (Local Service)</h4>
+                            <p>Delivered directly to your specified location within our service area.</p>
+                        </div>
+                    </label>
+
+                    <!-- Address Input (Hidden by default) -->
+                    <div id="addressContainer" style="display: none; background: #f9f9f9; padding: 1.5rem; border-radius: 12px; margin-bottom: 1rem; border: 1px solid #eee; margin-top: -0.5rem;">
+                        <h4 style="margin-bottom: 10px; color: var(--primary-green); font-size: 1rem;">📍 Delivery Address</h4>
+                        <textarea name="address" form="checkoutForm" id="addressInput" placeholder="Enter your full street address, apartment, city, and zip code..." style="width: 100%; padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px; font-family: inherit; font-size: 0.95rem; resize: vertical; min-height: 80px; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--primary-green)'" onblur="this.style.borderColor='#e0e0e0'"></textarea>
+                    </div>
+
+                    <label class="farm-option" id="selfPickupOption">
+                        <input type="radio" name="deliveryMethod" value="Self Pickup" form="checkoutForm">
+                        <div class="option-content">
+                            <h4>🏡 Self Pickup at Farm</h4>
+                            <p>Visit us at Evergreen Farm to collect your items personally.</p>
+                        </div>
+                    </label>
+
+                    <!-- Farm Address (Hidden by default, shown for Self Pickup) -->
+                    <div id="farmAddressContainer" style="display: none; background: #f0f8ff; padding: 1.5rem; border-radius: 12px; margin-bottom: 1rem; border: 1px solid #cce5ff; margin-top: -0.5rem;">
+                        <h4 style="margin-bottom: 10px; color: #0056b3; font-size: 1rem;">📍 Farm Location</h4>
+                        <p style="font-size: 0.95rem; color: #333; line-height: 1.5; margin: 0;">
+                            <strong>Evergreen Natural Farm</strong><br>
+                            123 Green Valley Road, Countryside<br>
+                            District 45, State 67890<br>
+                            <em>(Please bring your order confirmation when you visit)</em>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Payment Selection -->
+            <div class="checkout-module">
+                <div class="checkout-module-header">
+                    <span>💳 Payment Method</span>
+                </div>
+                <div class="checkout-module-body">
+                    <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 2rem;">Choose your preferred payment method.</p>
+                    
+                    <label class="farm-option payment-option" id="onlinePaymentOption">
+                        <input type="radio" name="paymentMethod" value="Online Payment" form="checkoutForm" required>
+                        <div class="option-content">
+                            <h4>📱 Online Payment (UPI / QR)</h4>
+                            <p>Pay instantly using any UPI app (GPay, PhonePe, Paytm).</p>
+                        </div>
+                    </label>
+
+                    <!-- QR Code Display Area (Hidden by default) -->
+                    <div id="qrCodeContainer" style="display: none; background: #f9f9f9; padding: 1.5rem; border-radius: 12px; text-align: center; margin-bottom: 1rem; border: 1px solid #eee;">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=evergreenfarm@upi&pn=Evergreen%20Farm" alt="UPI QR Code" style="width: 150px; height: 150px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                        <p style="font-weight: 700; color: var(--primary-green); margin-bottom: 5px;">Scan to Pay</p>
+                        <p style="font-size: 0.9rem; color: var(--text-muted);">UPI ID: <span style="font-weight: bold; color: #000;">evergreenfarm@upi</span></p>
+                    </div>
+
+                    <label class="farm-option payment-option" id="offlinePaymentOption">
+                        <input type="radio" name="paymentMethod" value="Offline Payment" form="checkoutForm">
+                        <div class="option-content">
+                            <h4>💵 Offline Payment (Cash)</h4>
+                            <p id="offlinePaymentDesc">Pay when you receive your order.</p>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: Price Summary -->
+        <div class="checkout-right reveal" style="animation-delay: 0.2s;">
+            <div class="price-sidebar">
+                <div class="summary-card">
+                    <h3 style="font-size: 1.35rem; font-weight: 800; margin-bottom: 2rem; border-bottom: 1px solid #f2f2f2; padding-bottom: 1rem;">Order Summary</h3>
+                    
+                    <div class="summary-row">
+                        <span>Delivery Fee</span>
+                        <span id="deliveryFeeLabel" style="color: #388e3c;">Calculated on selection</span>
+                    </div>
+                    
+                    <div class="summary-total">
+                        <span>Total</span>
+                        <span id="finalTotalDisplay">₹<%= parseFloat(cart.totalPrice).toFixed(0) %></span>
+                    </div>
+
+
+                    <form id="checkoutForm" action="/user/checkout" method="POST">
+                        <button type="submit" class="place-order-btn btn-ripple">Place Order →</button>
+                    </form>
+
+                    <div style="margin-top: 1.5rem; text-align: center; font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; justify-content: center; gap: 6px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                        SSL Secure Gateway
+                    </div>
+                </div>
+
+                <div class="summary-card" style="margin-top: 1.5rem; padding: 1.5rem;">
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: var(--text-muted);">
+                            <span style="font-size: 1.2rem;">🛡️</span> 100% Organic & Genuine Guarantee
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: var(--text-muted);">
+                            <span style="font-size: 1.2rem;">📞</span> Concierge Support Available
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Success Modal Overlay -->
+<div id="paymentProcessingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 3rem; border-radius: 24px; text-align: center; max-width: 400px; width: 90%; animation: modalFadeIn 0.3s ease-out; box-shadow: 0 20px 50px rgba(0,0,0,0.2);">
+        <div id="paymentSpinner" style="width: 60px; height: 60px; border: 5px solid #f3f3f3; border-top: 5px solid var(--primary-green); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1.5rem;"></div>
+        <div id="paymentSuccessCheck" style="display: none; font-size: 4.5rem; color: var(--primary-green); margin-bottom: 1rem; animation: bounce 0.5s ease-out; line-height: 1;">✅</div>
+        <h2 id="paymentStatusText" style="color: var(--text-main); margin-bottom: 0.5rem; font-size: 1.5rem;">Verifying Payment...</h2>
+        <p id="paymentSubText" style="color: var(--text-muted); font-size: 0.95rem;">Please wait while we confirm your transaction.</p>
+    </div>
+</div>
+<style>
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+</style>
+
+<script>
+    const baseAmount = <%= cart.totalPrice %>;
+    const deliveryAmount = <%= cart.totalDeliveryCharge || 0 %>;
+    const deliveryLabel = document.getElementById('deliveryFeeLabel');
+    const finalTotal = document.getElementById('finalTotalDisplay');
+    const options = document.querySelectorAll('input[name="deliveryMethod"]');
+    const paymentOptions = document.querySelectorAll('input[name="paymentMethod"]');
+    const qrCodeContainer = document.getElementById('qrCodeContainer');
+    const offlinePaymentDesc = document.getElementById('offlinePaymentDesc');
+    const addressContainer = document.getElementById('addressContainer');
+    const addressInput = document.getElementById('addressInput');
+    const farmAddressContainer = document.getElementById('farmAddressContainer');
+
+    // Handle Delivery Options
+    options.forEach(radio => {
+        radio.addEventListener('change', function() {
+            // Update active styling
+            document.querySelectorAll('input[name="deliveryMethod"]').forEach(r => r.closest('.farm-option').classList.remove('active'));
+            if(this.checked) this.closest('.farm-option').classList.add('active');
+
+            if (this.value === 'Home Delivery') {
+                addressContainer.style.display = 'block';
+                farmAddressContainer.style.display = 'none';
+                addressInput.setAttribute('required', 'required');
+                offlinePaymentDesc.innerText = 'Pay securely with cash after your items are delivered.';
+                if (deliveryAmount > 0) {
+                    deliveryLabel.innerText = '₹' + deliveryAmount.toFixed(0);
+                    deliveryLabel.style.color = 'var(--text-main)';
+                    finalTotal.innerText = '₹' + (baseAmount + deliveryAmount).toFixed(0);
+                } else {
+                    deliveryLabel.innerText = 'Complimentary';
+                    deliveryLabel.style.color = '#388e3c';
+                    finalTotal.innerText = '₹' + baseAmount.toFixed(0);
+                }
+            } else {
+                addressContainer.style.display = 'none';
+                farmAddressContainer.style.display = 'block';
+                addressInput.removeAttribute('required');
+                offlinePaymentDesc.innerText = 'Pay with cash at the farm when you pick up your items.';
+                deliveryLabel.innerText = 'No Charge';
+                deliveryLabel.style.color = '#388e3c';
+                finalTotal.innerText = '₹' + baseAmount.toFixed(0);
+            }
+        });
+    });
+
+    // Handle Payment Options
+    paymentOptions.forEach(radio => {
+        radio.addEventListener('change', function() {
+            // Update active styling
+            document.querySelectorAll('input[name="paymentMethod"]').forEach(r => r.closest('.farm-option').classList.remove('active'));
+            if(this.checked) this.closest('.farm-option').classList.add('active');
+
+            // Show/Hide QR Code
+            if (this.value === 'Online Payment') {
+                qrCodeContainer.style.display = 'block';
+            } else {
+                qrCodeContainer.style.display = 'none';
+            }
+        });
+    });
+
+    // Handle Form Submission for Online Payment Popup
+    const checkoutForm = document.getElementById('checkoutForm');
+    const paymentProcessingOverlay = document.getElementById('paymentProcessingOverlay');
+    const paymentSpinner = document.getElementById('paymentSpinner');
+    const paymentSuccessCheck = document.getElementById('paymentSuccessCheck');
+    const paymentStatusText = document.getElementById('paymentStatusText');
+    const paymentSubText = document.getElementById('paymentSubText');
+
+    checkoutForm.addEventListener('submit', function(e) {
+        const paymentRadio = document.querySelector('input[name="paymentMethod"]:checked');
+        
+        if (paymentRadio && paymentRadio.value === 'Online Payment') {
+            e.preventDefault(); // Stop normal submission
+            
+            // Show processing overlay
+            paymentProcessingOverlay.style.display = 'flex';
+            
+            // Simulate verification delay
+            setTimeout(() => {
+                // Show success state
+                paymentSpinner.style.display = 'none';
+                paymentSuccessCheck.style.display = 'block';
+                paymentStatusText.innerText = 'Payment Successful!';
+                paymentSubText.innerText = 'Your order is being placed...';
+                
+                // Submit form
+                setTimeout(() => {
+                    checkoutForm.submit();
+                }, 1500);
+            }, 2000);
+        }
+    });
+</script>
+
+<%- include('../partials/footer') %>

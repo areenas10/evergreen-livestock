@@ -1,0 +1,35 @@
+<%- include('../partials/header') %>
+
+<section class="container" style="min-height: 60vh; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+    <h2 style="text-align: center; margin-bottom: 2rem; color: var(--dark-green);">Contact Us</h2>
+    
+    <div style="display: flex; flex-wrap: wrap; gap: 2rem; justify-content: center; width: 100%; max-width: 900px;">
+        <div style="flex: 1; background: var(--white); padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+            <h3>Get in Touch</h3>
+            <p style="margin-top: 1rem;"><strong>Address:</strong> 123 Evergreen Road, Valley Farm Area</p>
+            <p style="margin-top: 0.5rem;"><strong>Phone:</strong> +1 234 567 890</p>
+            <p style="margin-top: 0.5rem;"><strong>Email:</strong> contact@evergreen.farm</p>
+            <p style="margin-top: 0.5rem;"><strong>Working Hours:</strong> Mon-Sat, 8am to 6pm</p>
+        </div>
+        
+        <div style="flex: 2; background: var(--white); padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+            <form action="#" method="POST" onsubmit="event.preventDefault(); alert('Message sent successfully!');">
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" required>
+                </div>
+                <div class="form-group">
+                    <label>Message</label>
+                    <textarea rows="4" required></textarea>
+                </div>
+                <button type="submit" class="btn">Send Message</button>
+            </form>
+        </div>
+    </div>
+</section>
+
+<%- include('../partials/footer') %>

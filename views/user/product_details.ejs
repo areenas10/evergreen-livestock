@@ -1,0 +1,501 @@
+<%- include('../partials/header') %>
+
+<style>
+.animal-dropdown-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-bottom: 0.8rem;
+    animation: fadeIn 0.3s ease;
+}
+.animal-dropdown-label {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text-muted, #64748b);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.animal-dropdown-select {
+    width: 100%;
+    padding: 0.85rem 1.2rem;
+    border: 2px solid var(--primary-green, #27ae60);
+    border-radius: 14px;
+    font-weight: 700;
+    color: var(--primary-green, #27ae60);
+    font-size: 1rem;
+    background: #fff;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M0 0l6 8 6-8z' fill='%2327ae60'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 1.2rem center;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+.animal-dropdown-select:focus {
+    outline: none;
+    border-color: #219653;
+    box-shadow: 0 0 0 4px rgba(39, 174, 96, 0.15);
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+<div class="container" style="margin-top: 4rem;">
+    <% 
+        // Build product-level fallback image list
+        let productLevelImgs = [];
+        if (product.images && product.images.length > 0) productLevelImgs = product.images;
+        else if (product.image) productLevelImgs = [product.image];
+        else productLevelImgs = ['/images/placeholder.jpg'];
+
+        // Build variants list — fall back to single legacy variant if none stored
+        let variants = [];
+        if (product.weightVariants && product.weightVariants.length > 0) {
+            // Ensure every variant has images — fall back to product-level if empty
+            variants = product.weightVariants.map(v => ({
+                weight: v.weight,
+                price: v.price,
+                deliveryCharge: v.deliveryCharge || 0,
+                stock: v.stock || 0,
+                images: (v.images && v.images.length > 0) ? v.images : productLevelImgs
+            }));
+        } else {
+            variants = [{
+                weight: product.weight || '—',
+                price: product.price || 0,
+                deliveryCharge: product.deliveryCharge || 0,
+                stock: product.stock || 0,
+                images: productLevelImgs
+            }];
+        }
+        const firstVariant = variants[0];
+        const liveAnimalCategories = ['Goats', 'Ducks', 'Rabbits', 'Pigeons'];
+        const isLiveAnimal = liveAnimalCategories.includes(product.category);
+    %>
+
+    <div class="pdp-wrapper">
+        <!-- LEFT: Image Gallery -->
+        <div class="pdp-gallery reveal" style="display: flex; gap: 1rem;">
+            <div id="pdpThumbs" class="pdp-thumbs" style="display: flex; flex-direction: column; gap: 0.8rem; width: 80px;">
+                <% firstVariant.images.forEach((img, idx) => { %>
+                    <img src="<%= img %>" 
+                        class="pdp-thumb <%= idx === 0 ? 'active' : '' %>" 
+                        style="width: 100%; height: 80px; object-fit: cover; border-radius: 12px; cursor: pointer; border: 2px solid transparent; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: var(--shadow-soft);"
+                        onclick="updateMainImg(this, '<%= img %>')" 
+                        onerror="this.src='/images/placeholder.jpg'">
+                <% }) %>
+            </div>
+            <div class="pdp-main" style="flex: 1; height: 500px; background: #fff; border-radius: 24px; overflow: hidden; box-shadow: var(--shadow-soft); border: 1px solid rgba(0,0,0,0.05);">
+                <img id="mainImg" class="breathe-anim" src="<%= firstVariant.images[0] %>" alt="<%= product.name %>" style="width: 100%; height: 100%; object-fit: cover; transition: opacity 0.4s ease;" onerror="this.src='/images/placeholder.jpg'">
+            </div>
+        </div>
+
+        <!-- RIGHT: Product Info -->
+        <div class="pdp-info reveal" style="animation-delay: 0.1s;">
+            <div style="font-size: 0.85rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px;">
+                Marketplace Selection
+            </div>
+            
+            <h1 class="pdp-title"><%= product.name %></h1>
+            
+
+            <div class="pdp-price-tag" id="pdpPrice">
+                <span>₹<%= parseFloat(firstVariant.price).toLocaleString('en-IN') %></span>
+            </div>
+
+            <div class="pdp-desc">
+                <%= product.description %>
+            </div>
+
+            <!-- Weight Variant Selector Container -->
+            <div style="margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 1.2rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <% if (isLiveAnimal) { %>
+                        <span style="font-size: 0.85rem; font-weight: 800; color: var(--primary-green); text-transform: uppercase; letter-spacing: 0.5px;">⚖️ Select Weight from Herd</span>
+                    <% } else { %>
+                        <span style="font-size: 0.85rem; font-weight: 800; color: var(--primary-green); text-transform: uppercase; letter-spacing: 0.5px;">⚖️ Select Weight / Size</span>
+                    <% } %>
+                    <span id="pdpStockBadge" style="font-size: 0.85rem; font-weight: 800; color: <%= firstVariant.stock > 0 ? '#27ae60' : '#e74c3c' %>;">
+                        <% if (firstVariant.stock > 1) { %>
+                            ✓ <%= firstVariant.stock %> Available
+                        <% } else if (firstVariant.stock == 1) { %>
+                            ⚠ Only 1 Unit Remaining
+                        <% } else { %>
+                            ⚠ Out of Stock
+                        <% } %>
+                    </span>
+                </div>
+
+                <div id="weightSelectorsContainer" style="display: flex; flex-direction: column; gap: 0.8rem;"></div>
+
+                <!-- Custom Weight Notice for Live Animals -->
+                <% if (isLiveAnimal) { %>
+                    <div style="padding: 0.8rem 1rem; background: #f4fcf7; border-radius: 12px; border: 1px dashed var(--primary-green); font-size: 0.78rem; color: var(--text-muted); line-height: 1.4;">
+                        💡 <strong>Unique Weights:</strong> Since every animal in our natural organic herd is raised naturally, they all have slightly different weights. Select your preferred animal's weight from the options above!
+                    </div>
+                <% } %>
+
+                <!-- Delivery charge display -->
+                <div id="pdpDelivery" style="font-size:0.82rem; color:var(--text-muted); font-weight:600;">
+                    <% if (firstVariant.deliveryCharge > 0) { %>
+                        🚚 Home delivery charge: <strong>₹<%= firstVariant.deliveryCharge %></strong>
+                    <% } else { %>
+                        🚚 Free home delivery
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- PDP Purchase Actions -->
+            <div class="pdp-actions" style="display: flex; gap: 1rem; margin-top: 1rem; align-items: flex-end;">
+                <form action="/user/cart/add" method="POST" style="flex: 1;" id="addToCartForm">
+                    <input type="hidden" name="productId" value="<%= product._id || product.id %>">
+                    <div id="selectedVariantsContainerCart">
+                        <input type="hidden" name="selectedVariantIndexes" value="0">
+                    </div>
+                    <div id="qtySection" style="margin-bottom: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <span style="font-size: 0.95rem; font-weight: 700; color: var(--text-main);">Quantity:</span>
+                            <div id="qtyStepperContainer" style="display: flex; align-items: center; gap: 8px;">
+                                <button type="button" onclick="changePdpQty(-1)" id="qtyMinusBtn" style="width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid #ddd; background: #fff; font-size: 1.1rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--primary-green)'; this.style.color='var(--primary-green)'" onmouseout="this.style.borderColor='#ddd'; this.style.color='#000'">-</button>
+                                <input type="number" name="quantity" id="qtyInput" value="1" min="1" max="<%= firstVariant.stock %>" readonly style="width: 40px; text-align: center; font-size: 1.1rem; font-weight: 800; border: none; outline: none; background: transparent;">
+                                <button type="button" onclick="changePdpQty(1)" id="qtyPlusBtn" style="width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid #ddd; background: #fff; font-size: 1.1rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--primary-green)'; this.style.color='var(--primary-green)'" onmouseout="this.style.borderColor='#ddd'; this.style.color='#000'">+</button>
+                            </div>
+                            <span id="qtyLimitLabel" style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); display: none;">1 Unit (Limit)</span>
+                        </div>
+                    </div>
+                    <button type="submit" id="addToCartBtn" class="btn btn-ripple" style="width: 100%; border-radius: 16px; padding: 0.9rem;" <%= firstVariant.stock <= 0 ? 'disabled' : '' %>>
+                        <%= firstVariant.stock > 0 ? 'Add to Cart' : 'Out of Stock' %>
+                    </button>
+                </form>
+
+                <form action="/user/cart/add" method="POST" style="flex: 1; align-self: flex-end;" id="buyNowForm">
+                    <input type="hidden" name="productId" value="<%= product._id || product.id %>">
+                    <div id="selectedVariantsContainerBuy">
+                        <input type="hidden" name="selectedVariantIndexes" value="0">
+                    </div>
+                    <input type="hidden" name="quantity" id="buyQtyInput" value="1">
+                    <button type="submit" id="buyNowBtn" class="btn btn-secondary btn-ripple" style="width: 100%; border-radius: 16px; padding: 0.9rem;" <%= firstVariant.stock <= 0 ? 'disabled' : '' %>>
+                        Buy Now
+                    </button>
+                </form>
+            </div>
+
+            <!-- Trust Details -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                <div style="display: flex; align-items: center; gap: 10px; font-size: 0.9rem; color: var(--text-muted);">
+                    <div style="width: 32px; height: 32px; background: #e8f5e9; border-radius: 50%; display: flex; align-items: center; justify-content: center;">🚚</div>
+                    Careful Logistics
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px; font-size: 0.9rem; color: var(--text-muted);">
+                    <div style="width: 32px; height: 32px; background: #e8f5e9; border-radius: 50%; display: flex; align-items: center; justify-content: center;">🌿</div>
+                    Pure Organic Feed
+                </div>
+            </div>
+
+            <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #f2f2f2; display: flex; align-items: center; gap: 15px;">
+                <div style="width: 50px; height: 50px; background: var(--primary-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">🚜</div>
+                <div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">PRODUCED & DELIVERED BY</div>
+                    <div style="font-size: 1.1rem; font-weight: 800; color: var(--primary-green);">Evergreen Farm</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Embed all variants data
+const pdpVariants = <%- JSON.stringify(variants) %>;
+const isLiveAnimalProduct = <%= isLiveAnimal %>;
+
+// Track the single selected variant index (for standard products)
+let selectedVariantIndex = 0;
+
+// Track multiple selected variant indexes (for live animals)
+let selectedVariantIndexes = [];
+
+function changePdpQty(amount) {
+    const qtyInput = document.getElementById('qtyInput');
+    if (!qtyInput) return;
+    
+    let currentQty = parseInt(qtyInput.value) || 1;
+    let newQty = currentQty + amount;
+    
+    let maxStock = 1;
+    if (isLiveAnimalProduct) {
+        maxStock = pdpVariants.filter(v => v.stock > 0).length;
+    } else {
+        const v = pdpVariants[selectedVariantIndex];
+        maxStock = v ? (v.stock || 0) : 0;
+    }
+    
+    if (newQty < 1) newQty = 1;
+    if (newQty > maxStock) newQty = maxStock;
+    
+    qtyInput.value = newQty;
+    
+    // Sync to hidden buyNowForm quantity
+    const buyQty = document.getElementById('buyQtyInput');
+    if (buyQty) buyQty.value = newQty;
+
+    if (isLiveAnimalProduct) {
+        // Adjust selectedVariantIndexes size to match newQty
+        const diff = newQty - selectedVariantIndexes.length;
+        if (diff > 0) {
+            // Add new unique available variant indexes
+            for (let i = 0; i < diff; i++) {
+                const nextAvail = pdpVariants.findIndex((v, vIdx) => 
+                    v.stock > 0 && !selectedVariantIndexes.includes(vIdx)
+                );
+                if (nextAvail > -1) {
+                    selectedVariantIndexes.push(nextAvail);
+                }
+            }
+        } else if (diff < 0) {
+            // Remove from the end
+            selectedVariantIndexes.splice(newQty);
+        }
+        
+        renderWeightSelectors();
+        syncPdpDetails();
+    }
+}
+
+function onVariantChange(idx) {
+    idx = parseInt(idx);
+    const v = pdpVariants[idx];
+    if (!v) return;
+
+    selectedVariantIndex = idx;
+
+    // Update Price display
+    const priceDisplay = document.getElementById('pdpPrice');
+    if (priceDisplay) {
+        priceDisplay.innerHTML = `<span>₹${parseFloat(v.price).toLocaleString('en-IN')}</span>`;
+    }
+
+    // Update Delivery Charge display
+    const deliveryDisplay = document.getElementById('pdpDelivery');
+    if (deliveryDisplay) {
+        const dc = v.deliveryCharge || 0;
+        deliveryDisplay.innerHTML = dc > 0
+            ? `🚚 Home delivery charge: <strong>₹${dc}</strong>`
+            : `🚚 Free home delivery`;
+    }
+
+    // Update Stock Badge
+    const badge = document.getElementById('pdpStockBadge');
+    const stock = v.stock || 0;
+    if (badge) {
+        if (stock > 1) {
+            badge.textContent = `✓ ${stock} Available`;
+            badge.style.color = '#27ae60';
+        } else if (stock === 1) {
+            badge.textContent = '⚠ Only 1 Unit Remaining';
+            badge.style.color = '#e67e22';
+        } else {
+            badge.textContent = '⚠ Out of Stock';
+            badge.style.color = '#e74c3c';
+        }
+    }
+
+    // Update Quantity Stepper boundaries & Visibility based on stock
+    const qtyInput = document.getElementById('qtyInput');
+    const qtyStepper = document.getElementById('qtyStepperContainer');
+    const qtyLimitLabel = document.getElementById('qtyLimitLabel');
+    
+    if (qtyInput) {
+        qtyInput.max = stock;
+        qtyInput.value = stock > 0 ? 1 : 0;
+    }
+    
+    if (qtyStepper && qtyLimitLabel) {
+        if (stock > 1) {
+            qtyStepper.style.display = 'flex';
+            qtyLimitLabel.style.display = 'none';
+        } else if (stock === 1) {
+            qtyStepper.style.display = 'none';
+            qtyLimitLabel.style.display = 'inline';
+            qtyLimitLabel.textContent = '1 Unit (Limit)';
+        } else {
+            qtyStepper.style.display = 'none';
+            qtyLimitLabel.style.display = 'inline';
+            qtyLimitLabel.textContent = '0 Units (Sold Out)';
+        }
+    }
+
+    // Sync to hidden buyNowForm quantity
+    const buyQty = document.getElementById('buyQtyInput');
+    if (buyQty) buyQty.value = stock > 0 ? 1 : 0;
+
+    // Update form hidden indexes
+    const cartContainer = document.getElementById('selectedVariantsContainerCart');
+    if (cartContainer) {
+        cartContainer.innerHTML = `<input type="hidden" name="selectedVariantIndexes" value="${idx}">`;
+    }
+    const buyContainer = document.getElementById('selectedVariantsContainerBuy');
+    if (buyContainer) {
+        buyContainer.innerHTML = `<input type="hidden" name="selectedVariantIndexes" value="${idx}">`;
+    }
+
+    // Update button states based on stock availability
+    const cartBtn = document.getElementById('addToCartBtn');
+    const buyBtn  = document.getElementById('buyNowBtn');
+    if (cartBtn && buyBtn) {
+        cartBtn.disabled = stock <= 0;
+        cartBtn.textContent = stock <= 0 ? 'Out of Stock' : 'Add to Cart';
+        buyBtn.disabled = stock <= 0;
+    }
+    updateGalleryForVariant(idx);
+}
+
+function renderWeightSelectors() {
+    const container = document.getElementById('weightSelectorsContainer');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (isLiveAnimalProduct) {
+        const qty = selectedVariantIndexes.length;
+        for (let idx = 0; idx < qty; idx++) {
+            const selectorId = `weightVariantSelect_${idx}`;
+            const wrapper = document.createElement('div');
+            wrapper.className = 'animal-dropdown-wrapper';
+            const label = document.createElement('label');
+            label.className = 'animal-dropdown-label';
+            label.innerHTML = `🐐 Animal ${idx + 1} Weight Variant:`;
+            wrapper.appendChild(label);
+            const select = document.createElement('select');
+            select.id = selectorId;
+            select.className = 'animal-dropdown-select';
+            pdpVariants.forEach((v, vIdx) => {
+                const isSelectedBySelf = selectedVariantIndexes[idx] === vIdx;
+                const isSelectedByOther = selectedVariantIndexes.includes(vIdx) && !isSelectedBySelf;
+                const option = document.createElement('option');
+                option.value = vIdx;
+                option.text = `${v.weight} — ₹${parseFloat(v.price).toLocaleString('en-IN')}${v.stock <= 0 ? ' (Sold Out)' : ''}`;
+                if (v.stock <= 0) { option.disabled = true; option.style.color = '#cbd5e1'; }
+                else if (isSelectedByOther) { option.disabled = true; option.style.color = '#cbd5e1'; option.text += ' (Selected for other unit)'; }
+                if (isSelectedBySelf) option.selected = true;
+                select.appendChild(option);
+            });
+            select.onchange = function() {
+                selectedVariantIndexes[idx] = parseInt(this.value);
+                renderWeightSelectors();
+                syncPdpDetails();
+            };
+            wrapper.appendChild(select);
+            container.appendChild(wrapper);
+        }
+    } else {
+        const select = document.createElement('select');
+        select.id = 'weightVariantSelect';
+        select.className = 'animal-dropdown-select';
+        pdpVariants.forEach((v, vIdx) => {
+            const option = document.createElement('option');
+            option.value = vIdx;
+            option.text = `${v.weight} — ₹${parseFloat(v.price).toLocaleString('en-IN')}${v.stock <= 0 ? ' (Sold Out)' : ''}`;
+            if (v.stock <= 0) { option.disabled = true; option.style.color = '#cbd5e1'; }
+            if (selectedVariantIndex === vIdx) option.selected = true;
+            select.appendChild(option);
+        });
+        select.onchange = function() { onVariantChange(this.value); };
+        container.appendChild(select);
+    }
+}
+
+function syncPdpDetails() {
+    if (isLiveAnimalProduct) {
+        let totalPrice = 0, totalDeliveryCharge = 0;
+        selectedVariantIndexes.forEach(idx => {
+            const v = pdpVariants[idx];
+            if (v) { totalPrice += parseFloat(v.price) || 0; totalDeliveryCharge += parseFloat(v.deliveryCharge) || 0; }
+        });
+        const priceDisplay = document.getElementById('pdpPrice');
+        if (priceDisplay) priceDisplay.innerHTML = `<span>₹${totalPrice.toLocaleString('en-IN')}</span>`;
+        const deliveryDisplay = document.getElementById('pdpDelivery');
+        if (deliveryDisplay) deliveryDisplay.innerHTML = totalDeliveryCharge > 0 ? `🚚 Combined home delivery charge: <strong>₹${totalDeliveryCharge}</strong>` : `🚚 Free home delivery`;
+        const badge = document.getElementById('pdpStockBadge');
+        if (badge) {
+            const totalInStock = pdpVariants.filter(v => v.stock > 0).length;
+            if (totalInStock > 1) { badge.textContent = `✓ ${totalInStock} Animals Available`; badge.style.color = '#27ae60'; }
+            else if (totalInStock === 1) { badge.textContent = '⚠ Only 1 Animal Remaining'; badge.style.color = '#e67e22'; }
+            else { badge.textContent = '⚠ Herd Sold Out'; badge.style.color = '#e74c3c'; }
+        }
+        const qtyInput = document.getElementById('qtyInput');
+        if (qtyInput) qtyInput.value = selectedVariantIndexes.length;
+        const buyQtyInput = document.getElementById('buyQtyInput');
+        if (buyQtyInput) buyQtyInput.value = selectedVariantIndexes.length;
+        const cartContainer = document.getElementById('selectedVariantsContainerCart');
+        if (cartContainer) cartContainer.innerHTML = selectedVariantIndexes.map(idx => `<input type="hidden" name="selectedVariantIndexes" value="${idx}">`).join('');
+        const buyContainer = document.getElementById('selectedVariantsContainerBuy');
+        if (buyContainer) buyContainer.innerHTML = selectedVariantIndexes.map(idx => `<input type="hidden" name="selectedVariantIndexes" value="${idx}">`).join('');
+        const cartBtn = document.getElementById('addToCartBtn');
+        const buyBtn = document.getElementById('buyNowBtn');
+        if (cartBtn && buyBtn) {
+            const totalInStock = pdpVariants.filter(v => v.stock > 0).length;
+            const disabled = totalInStock <= 0 || selectedVariantIndexes.length === 0;
+            cartBtn.disabled = disabled;
+            cartBtn.textContent = disabled ? 'Out of Stock' : 'Add to Cart';
+            buyBtn.disabled = disabled;
+        }
+        if (selectedVariantIndexes.length > 0) updateGalleryForVariant(selectedVariantIndexes[0]);
+    }
+}
+
+function updateGalleryForVariant(idx) {
+    const v = pdpVariants[idx];
+    if (!v) return;
+    const imgs = v.images && v.images.length > 0 ? v.images : ['/images/placeholder.jpg'];
+    const thumbsContainer = document.getElementById('pdpThumbs');
+    if (thumbsContainer) {
+        thumbsContainer.innerHTML = '';
+        imgs.forEach((src, i) => {
+            const thumb = document.createElement('img');
+            thumb.src = src; thumb.className = 'pdp-thumb' + (i === 0 ? ' active' : '');
+            thumb.style.cssText = 'width:100%;height:80px;object-fit:cover;border-radius:12px;cursor:pointer;border:2px solid transparent;transition:all 0.3s cubic-bezier(0.4,0,0.2,1);box-shadow:var(--shadow-soft);';
+            thumb.onclick = () => updateMainImg(thumb, src);
+            thumbsContainer.appendChild(thumb);
+        });
+    }
+    const mainImg = document.getElementById('mainImg');
+    if (mainImg) { mainImg.style.opacity = '0'; setTimeout(() => { mainImg.src = imgs[0]; mainImg.style.opacity = '1'; }, 200); }
+}
+
+function updateMainImg(thumb, src) {
+    const mainImg = document.getElementById('mainImg');
+    if (mainImg) { mainImg.style.opacity = '0'; setTimeout(() => { mainImg.src = src; mainImg.style.opacity = '1'; }, 200); }
+    document.querySelectorAll('.pdp-thumb').forEach(t => t.classList.remove('active'));
+    thumb.classList.add('active');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const preselectedVariant = parseInt(urlParams.get('variant'));
+    let initialVariant = pdpVariants.findIndex(v => v.stock > 0);
+    if (!isNaN(preselectedVariant) && pdpVariants[preselectedVariant]?.stock > 0) initialVariant = preselectedVariant;
+    if (isLiveAnimalProduct) {
+        const totalInStock = pdpVariants.filter(v => v.stock > 0).length;
+        selectedVariantIndexes = (initialVariant > -1) ? [initialVariant] : [];
+        const qtyMinusBtn = document.getElementById('qtyMinusBtn'), qtyPlusBtn = document.getElementById('qtyPlusBtn');
+        if (qtyMinusBtn) qtyMinusBtn.style.display = 'flex';
+        if (qtyPlusBtn) qtyPlusBtn.style.display = 'flex';
+        const qtyInput = document.getElementById('qtyInput');
+        if (qtyInput) { qtyInput.max = totalInStock; qtyInput.value = totalInStock > 0 ? 1 : 0; }
+        const buyQty = document.getElementById('buyQtyInput');
+        if (buyQty) buyQty.value = totalInStock > 0 ? 1 : 0;
+        renderWeightSelectors();
+        syncPdpDetails();
+    } else {
+        selectedVariantIndex = initialVariant > -1 ? initialVariant : 0;
+        renderWeightSelectors();
+        onVariantChange(selectedVariantIndex);
+    }
+});
+</script>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,623 @@
+<%- include('./partials/admin_header') %>
+
+<% if (activeSection === 'overview') { %>
+    <!-- Stats Grid -->
+    <div class="stats-grid reveal">
+        <div class="stat-card" style="border-top: 4px solid var(--primary-green);">
+            <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 0.5rem;">Inventory Size</div>
+            <h3 style="margin: 0; font-size: 1.1rem; color: var(--primary-green);">Total Products</h3>
+            <div class="value" style="font-size: 2.5rem;"><%= totalProducts %></div>
+        </div>
+        <div class="stat-card" style="border-top: 4px solid #3498db;">
+            <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 0.5rem;">Sales Volume</div>
+            <h3 style="margin: 0; font-size: 1.1rem; color: #2980b9;">Total Orders</h3>
+            <div class="value" style="font-size: 2.5rem;"><%= totalOrders %></div>
+        </div>
+        <div class="stat-card" style="border-top: 4px solid #f39c12;">
+            <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 0.5rem;">Action Needed</div>
+            <h3 style="margin: 0; font-size: 1.1rem; color: #d35400;">Pending Orders</h3>
+            <div class="value" style="font-size: 2.5rem;"><%= pendingOrders %></div>
+        </div>
+        <div class="stat-card" style="border-top: 4px solid #9b59b6;">
+            <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 0.5rem;">Current Session</div>
+            <h3 style="margin: 0; font-size: 1.1rem; color: #8e44ad;">Today's Date</h3>
+            <div class="value" style="font-size: 1.25rem; margin-top: 1rem; font-weight: 800;"><%= new Date().toLocaleDateString() %></div>
+        </div>
+    </div>
+    </div>
+
+    <!-- All Orders Overview Table -->
+    <div class="admin-card reveal" style="margin-top: 3rem; animation-delay: 0.1s;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h2 style="margin-bottom: 0;">📋 Recent Orders History (All)</h2>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Date</th>
+                        <th>Customer</th>
+                        <th>Items</th>
+                        <th>Amount</th>
+                        <th>Payment Status</th>
+                        <th>Order Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (orders && orders.length > 0) { %>
+                        <% orders.forEach(order => { %>
+                            <tr>
+                                <td style="font-family: monospace; font-weight: bold; color: var(--primary-green);"><%= order.orderId || order.id.substring(0,8) %></td>
+                                <td style="font-size: 0.8rem;"><%= new Date(order.createdAt).toLocaleDateString() %></td>
+                                <td style="font-weight: 500;">
+                                    <%= order.userId ? order.userId.name : 'Guest' %>
+                                    <% if (order.address) { %>
+                                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal; margin-top: 2px;"><%= order.address %></div>
+                                    <% } %>
+                                    <% if (order.phone) { %>
+                                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal; margin-top: 2px;">📞 <%= order.phone %></div>
+                                    <% } %>
+                                </td>
+                                <td style="font-size: 0.8rem; line-height: 1.4;">
+                                    <% order.items.forEach(item => { %>
+                                        <div style="margin-bottom: 2px;">
+                                            <span style="font-weight: bold;"><%= item.quantity %>x</span> 
+                                            <%= item.productId ? item.productId.name : 'Deleted Product' %> 
+                                            <span style="color: var(--text-muted);"><%= item.selectedWeight ? `(${item.selectedWeight})` : '' %></span>
+                                        </div>
+                                    <% }) %>
+                                </td>
+                                <td style="font-weight: bold; color: var(--primary-green);">₹<%= parseFloat(order.total_amount).toFixed(0) %></td>
+                                <td>
+                                    <div style="font-weight: 600; font-size: 0.85rem; margin-bottom: 4px; color: var(--primary-green);">
+                                        <%= order.payment_details && order.payment_details.method ? order.payment_details.method : 'N/A' %>
+                                    </div>
+                                    <span class="badge <%= order.payment_status === 'Paid' ? 'badge-completed' : 'badge-pending' %>">
+                                        <%= order.payment_status %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <% 
+                                        let statusClass = 'badge-pending';
+                                        let statusText = order.order_status;
+                                        if (order.order_status === 'Confirmed') statusClass = 'badge-paid';
+                                        else if (order.order_status === 'Completed') statusClass = 'badge-completed';
+                                        else if (order.order_status === 'Processing') statusClass = 'badge-processing';
+                                        else if (order.order_status === 'Cancelled') statusClass = 'badge-cancelled';
+                                    %>
+                                    <span class="badge <%= statusClass %>">
+                                        <%= statusText %>
+                                    </span>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr><td colspan="6" style="text-align: center; padding: 2rem;">No orders yet.</td></tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+<% } %>
+
+<% if (activeSection === 'products') { %>
+    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
+        <!-- Add Product Card -->
+        <div class="admin-card" style="box-shadow: var(--shadow-soft); border-radius: var(--radius);">
+            <h2>✨ Add New Product</h2>
+            <form action="/admin/products/add" method="POST" enctype="multipart/form-data" id="addProductForm">
+                <div class="form-group">
+                    <label>Product Name</label>
+                    <input type="text" name="name" required placeholder="e.g. Beetal Goat">
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select name="category" required>
+                        <option value="Goats">Goats</option>
+                        <option value="Ducks">Ducks</option>
+                        <option value="Rabbits">Rabbits</option>
+                        <option value="Pigeons">Pigeons</option>
+                        <option value="Food items">Food items</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea name="description" rows="3" required placeholder="Details about the livestock..."></textarea>
+                </div>
+
+                <!-- Weight Variants Builder -->
+                <div style="margin-top:1.5rem;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                        <label style="font-weight:800;font-size:0.9rem;margin:0;">⚖️ Weight Variants</label>
+                        <button type="button" onclick="addVariantRow('addVariantsContainer')" class="btn btn-secondary" style="padding:0.35rem 0.9rem;font-size:0.8rem;border-radius:10px;">+ Add Variant</button>
+                    </div>
+                    <div id="addVariantsContainer"></div>
+                    <p style="font-size:0.78rem;color:var(--text-muted);margin-top:0.5rem;">Add at least one weight variant. The first variant sets the default price shown in listings.</p>
+                </div>
+
+                <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1.5rem;">
+                    <input type="checkbox" name="availabilityStatus" id="availabilityStatus" checked style="width: auto;">
+                    <label for="availabilityStatus" style="margin: 0;">Available In Stock</label>
+                </div>
+                <button type="submit" class="btn" style="width: 100%; margin-top: 1rem; border-radius: 12px; height: 50px;">Add to Inventory</button>
+            </form>
+        </div>
+
+        <!-- Inventory / Management List -->
+        <div class="admin-card" id="products-section" style="box-shadow: var(--shadow-soft); border-radius: var(--radius);">
+            <h2>📦 Manage Inventory</h2>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Image</th>
+                            <th>Name</th>
+                            <th>Price</th>
+                            <th>Stock</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% products.forEach(product => { %>
+                            <tr>
+                                <td><img src="<%= product.image || '/images/placeholder.jpg' %>" alt="" style="width: 45px; height: 45px; border-radius: 8px; object-fit: cover;" onerror="this.onerror=null; this.src='/images/placeholder.jpg'; this.style.opacity='0.3';"></td>
+                                <td style="font-weight: 500;"><%= product.name %></td>
+                                <td>₹<%= parseFloat(product.price).toFixed(2) %></td>
+                                <td style="font-weight: 700; color: <%= product.stock <= 5 ? '#e67e22' : 'inherit' %>;"><%= product.stock %></td>
+                                <td>
+                                    <span class="badge <%= product.stock > 0 ? 'badge-completed' : 'badge-pending' %>">
+                                        <%= product.stock > 0 ? 'In Stock' : 'Out' %>
+                                    </span>
+                                    <% if (!product.availability_status) { %>
+                                        <br><small style="color: #e74c3c; font-size: 0.7rem;">(Hidden from User)</small>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <button class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;"
+                                            data-id="<%= product.id %>"
+                                            data-name="<%= product.name %>"
+                                            data-category="<%= product.category %>"
+                                            data-description="<%= product.description %>"
+                                            data-availability="<%= product.availability_status %>"
+                                            data-variants='<%- JSON.stringify(product.weightVariants && product.weightVariants.length ? product.weightVariants : [{weight: product.weight || "", price: product.price || 0, deliveryCharge: product.deliveryCharge || 0, stock: product.stock || 0, images: product.images || []}]) %>'
+                                            onclick="openEditModal(this)">
+                                            Edit
+                                        </button>
+                                        <form action="/admin/products/delete/<%= product.id %>" method="POST" onsubmit="return confirm('Confirm deletion?');">
+                                            <button type="submit" class="btn btn-danger" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+<% } %>
+
+<% if (activeSection === 'outofstock') { %>
+    <div class="admin-card" id="outofstock-section" style="box-shadow: var(--shadow-soft); border-radius: var(--radius);">
+        <h2>🚫 Out of Stock Items</h2>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Below are products with zero stock level. Click <span style="font-weight: bold; color: var(--primary-green);">Edit</span> to replenish inventory.</p>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Image</th>
+                        <th>Name</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% const emptyProducts = products.filter(p => p.stock <= 0); %>
+                    <% if (emptyProducts.length > 0) { %>
+                        <% emptyProducts.forEach(product => { %>
+                            <tr>
+                                <td><img src="<%= product.image || '/images/placeholder.jpg' %>" alt="" style="width: 45px; height: 45px; border-radius: 8px; object-fit: cover;" onerror="this.onerror=null; this.src='/images/placeholder.jpg'; this.style.opacity='0.3';"></td>
+                                <td style="font-weight: 500; color: #e74c3c;"><%= product.name %></td>
+                                <td>₹<%= parseFloat(product.price).toFixed(2) %></td>
+                                <td style="font-weight: 700; color: #e74c3c;"><%= product.stock %></td>
+                                <td>
+                                    <span class="badge badge-pending" style="background-color: #fce4e4; color: #cc0000;">Out of Stock</span>
+                                </td>
+                                <td>
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <button class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;"
+                                            data-id="<%= product.id %>"
+                                            data-name="<%= product.name %>"
+                                            data-category="<%= product.category %>"
+                                            data-description="<%= product.description %>"
+                                            data-availability="<%= product.availability_status %>"
+                                            data-variants='<%- JSON.stringify(product.weightVariants && product.weightVariants.length ? product.weightVariants : [{weight: product.weight || "", price: product.price || 0, deliveryCharge: product.deliveryCharge || 0, stock: product.stock || 0, images: product.images || []}]) %>'
+                                            onclick="openEditModal(this)">
+                                            Edit
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                                <div style="font-size: 3rem; margin-bottom: 1rem;">✅</div>
+                                <h3 style="color: var(--primary-green);">Perfect Inventory Health!</h3>
+                                <p>No products are currently out of stock.</p>
+                            </td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+<% } %>
+
+<% if (activeSection === 'pending_orders') { %>
+    <div class="admin-card" id="pending-orders-section" style="margin-top: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h2 style="margin-bottom: 0;">📋 All Active Orders</h2>
+            <span class="badge badge-pending"><%= pendingOrders %> Pending</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Date/Time</th>
+                        <th>Customer</th>
+                        <th>Items</th>
+                        <th>Amount</th>
+                        <th>Delivery</th>
+                        <th>Payment</th>
+                        <th>Status</th>
+                        <th>Update Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% const activeList = orders.filter(o => o.order_status !== 'Completed' && o.order_status !== 'Cancelled'); %>
+                    <% if (activeList.length > 0) { %>
+                        <% activeList.forEach(order => { %>
+                            <tr>
+                                <td style="font-family: monospace; font-weight: bold; color: var(--primary-green);"><%= order.orderId || order.id.substring(0,8) %></td>
+                                <td style="font-size: 0.8rem;">
+                                    <div><%= new Date(order.createdAt).toLocaleDateString() %></div>
+                                    <div style="color: var(--text-muted);"><%= new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %></div>
+                                </td>
+                                <td style="font-weight: 500;"><%= order.userId ? order.userId.name : 'Guest' %></td>
+                                <td style="font-size: 0.8rem; line-height: 1.4;">
+                                    <% order.items.forEach(item => { %>
+                                        <div style="margin-bottom: 2px;">
+                                            <span style="font-weight: bold;"><%= item.quantity %>x</span> 
+                                            <%= item.productId ? item.productId.name : 'Deleted Product' %> 
+                                            <span style="color: var(--text-muted);"><%= item.selectedWeight ? `(${item.selectedWeight})` : '' %></span>
+                                        </div>
+                                    <% }) %>
+                                </td>
+                                <td><div style="font-weight: bold; color: var(--primary-green);">₹<%= parseFloat(order.total_amount).toFixed(0) %></div></td>
+                                <td style="font-size: 0.8rem; color: var(--text-muted);">
+                                    <span style="font-weight: bold;"><%= order.delivery_method || 'N/A' %></span>
+                                    <% if (order.address) { %>
+                                        <div style="margin-top: 4px; line-height: 1.3;"><%= order.address %></div>
+                                    <% } %>
+                                    <% if (order.phone) { %>
+                                        <div style="margin-top: 4px; line-height: 1.3; font-weight: 500;">📞 <%= order.phone %></div>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <div style="font-weight: 600; font-size: 0.85rem; margin-bottom: 4px; color: var(--primary-green);">
+                                        <%= order.payment_details && order.payment_details.method ? order.payment_details.method : 'N/A' %>
+                                    </div>
+                                    <span class="badge <%= order.payment_status === 'Paid' ? 'badge-completed' : 'badge-pending' %>">
+                                        <%= order.payment_status %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <%
+                                        let sBadge = 'badge-pending';
+                                        if (order.order_status === 'Processing') sBadge = 'badge-processing';
+                                        else if (order.order_status === 'Confirmed') sBadge = 'badge-paid';
+                                    %>
+                                    <span class="badge <%= sBadge %>"><%= order.order_status.toUpperCase() %></span>
+                                </td>
+                                <td>
+                                    <form action="/admin/orders/update/<%= order.id %>" method="POST" style="display: flex; flex-direction: column; gap: 0.4rem;">
+                                        <select name="orderStatus" style="padding: 0.35rem 0.4rem; font-size: 0.75rem; border-radius: 6px; border: 1px solid #ddd; cursor: pointer; background: #fff; color: var(--text-main);">
+                                            <option value="Pending"    <%= order.order_status === 'Pending'    ? 'selected' : '' %>>📦 ⏳ Pending</option>
+                                            <option value="Processing" <%= order.order_status === 'Processing' ? 'selected' : '' %>>📦 🔄 Processing</option>
+                                            <option value="Confirmed"  <%= order.order_status === 'Confirmed'  ? 'selected' : '' %>>📦 ✅ Confirmed</option>
+                                            <option value="Completed"  <%= order.order_status === 'Completed'  ? 'selected' : '' %>>📦 🏁 Completed</option>
+                                            <option value="Cancelled"  <%= order.order_status === 'Cancelled'  ? 'selected' : '' %>>📦 ✕ Cancelled</option>
+                                        </select>
+                                        
+                                        <% let pMethod = order.payment_details && order.payment_details.method ? order.payment_details.method : 'Offline Payment'; %>
+                                        <select name="paymentMethod" style="padding: 0.35rem 0.4rem; font-size: 0.75rem; border-radius: 6px; border: 1px solid #ddd; cursor: pointer; background: #fff; color: var(--text-main);">
+                                            <option value="Online Payment" <%= pMethod === 'Online Payment' ? 'selected' : '' %>>💳 Online Pay</option>
+                                            <option value="Offline Payment" <%= pMethod === 'Offline Payment' ? 'selected' : '' %>>💵 Offline Pay</option>
+                                        </select>
+                                        
+                                        <select name="paymentStatus" style="padding: 0.35rem 0.4rem; font-size: 0.75rem; border-radius: 6px; border: 1px solid #ddd; cursor: pointer; background: #fff; color: var(--text-main);">
+                                            <option value="Pending" <%= order.payment_status === 'Pending' ? 'selected' : '' %>>💰 Fund: Pending</option>
+                                            <option value="Paid" <%= order.payment_status === 'Paid' ? 'selected' : '' %>>💰 Fund: Paid</option>
+                                        </select>
+
+                                        <button type="submit" class="btn btn-secondary" style="padding: 0.35rem; font-size: 0.75rem; border-radius: 6px; width: 100%;">Update All</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr><td colspan="8" style="text-align: center; padding: 2rem; color: var(--text-muted);">No active orders right now.</td></tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+<% } %>
+
+<% if (activeSection === 'completed_orders') { %>
+    <div class="admin-card" id="completed-orders-section" style="margin-top: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h2 style="margin-bottom: 0; color: var(--primary-green);">✅ Completed Orders History</h2>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Date/Time</th>
+                        <th>Customer</th>
+                        <th>Items</th>
+                        <th>Amount</th>
+                        <th>Payment</th>
+                        <th>Status</th>
+                        <th>Revert</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% const completedList = orders.filter(o => o.order_status === 'Completed'); %>
+                    <% if (completedList.length > 0) { %>
+                        <% completedList.forEach(order => { %>
+                            <tr>
+                                <td style="font-family: monospace; font-weight: bold; color: var(--primary-green);"><%= order.orderId || order.id.substring(0,8) %></td>
+                                <td style="font-size: 0.8rem;">
+                                    <div><%= new Date(order.createdAt).toLocaleDateString() %></div>
+                                    <div style="color: var(--text-muted);"><%= new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %></div>
+                                </td>
+                                <td style="font-weight: 500;">
+                                    <%= order.userId ? order.userId.name : 'Guest' %>
+                                    <% if (order.address) { %>
+                                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal; margin-top: 2px;"><%= order.address %></div>
+                                    <% } %>
+                                    <% if (order.phone) { %>
+                                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal; margin-top: 2px;">📞 <%= order.phone %></div>
+                                    <% } %>
+                                </td>
+                                <td style="font-size: 0.8rem; line-height: 1.4;">
+                                    <% order.items.forEach(item => { %>
+                                        <div style="margin-bottom: 2px;">
+                                            <span style="font-weight: bold;"><%= item.quantity %>x</span> 
+                                            <%= item.productId ? item.productId.name : 'Deleted Product' %> 
+                                            <span style="color: var(--text-muted);"><%= item.selectedWeight ? `(${item.selectedWeight})` : '' %></span>
+                                        </div>
+                                    <% }) %>
+                                </td>
+                                <td><div style="font-weight: bold; color: var(--primary-green);">₹<%= parseFloat(order.total_amount).toFixed(0) %></div></td>
+                                <td>
+                                    <div style="font-weight: 600; font-size: 0.85rem; margin-bottom: 4px; color: var(--primary-green);">
+                                        <%= order.payment_details && order.payment_details.method ? order.payment_details.method : 'N/A' %>
+                                    </div>
+                                    <span class="badge badge-completed">Paid</span>
+                                </td>
+                                <td><span class="badge badge-completed">COMPLETED</span></td>
+                                <td>
+                                    <form action="/admin/orders/update/<%= order.id %>" method="POST" style="display: flex; gap: 0.5rem;">
+                                        <input type="hidden" name="orderStatus" value="Pending">
+                                        <button type="submit" class="btn btn-secondary" style="padding: 0.25rem 0.7rem; font-size: 0.8rem; background: #eee; color: #666;">Move to Pending</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr><td colspan="7" style="text-align: center; padding: 2rem;">No completed orders yet.</td></tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+<% } %>
+
+<!-- Edit Product Modal -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeEditModal()">&times;</span>
+        <h2 style="border: none; margin-bottom: 2rem; color: var(--primary-green);">✨ Edit Product</h2>
+        
+        <form id="editForm" action="" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label>Product Name</label>
+                <input type="text" name="name" id="editName" required>
+            </div>
+            <div class="form-group">
+                <label>Category</label>
+                <select name="category" id="editCategory" required>
+                    <option value="Goats">Goats</option>
+                    <option value="Ducks">Ducks</option>
+                    <option value="Rabbits">Rabbits</option>
+                    <option value="Pigeons">Pigeons</option>
+                    <option value="Food items">Food items</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea name="description" id="editDescription" rows="3" required></textarea>
+            </div>
+
+            <!-- Weight Variants Builder -->
+            <div style="margin-top:1.5rem;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                    <label style="font-weight:800;font-size:0.9rem;margin:0;">&#9878; Weight Variants</label>
+                    <button type="button" onclick="addVariantRow('editVariantsContainer')" class="btn btn-secondary" style="padding:0.35rem 0.9rem;font-size:0.8rem;border-radius:10px;">+ Add Variant</button>
+                </div>
+                <div id="editVariantsContainer"></div>
+            </div>
+
+            <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1.5rem;">
+                <input type="checkbox" name="availabilityStatus" id="editAvailability" style="width: auto;">
+                <label for="editAvailability" style="margin: 0;">Available In Stock</label>
+            </div>
+            <button type="submit" class="btn" style="width: 100%; margin-top: 2rem; border-radius: 12px; height: 50px;">Save Changes</button>
+        </form>
+    </div>
+</div>
+
+<script>
+// ─── Variant Row Builder ──────────────────────────────────────
+let addVarCount = 0;
+let editVarCount = 0;
+
+function addVariantRow(containerId, prefill) {
+    const container = document.getElementById(containerId);
+    const isEdit = containerId === 'editVariantsContainer';
+    const idx = isEdit ? editVarCount++ : addVarCount++;
+
+    const row = document.createElement('div');
+    row.className = 'variant-row';
+    row.style.cssText = 'background:#f8fafb;border:1.5px solid #e0e8e0;border-radius:14px;padding:1rem 1rem 0.8rem;margin-bottom:0.9rem;position:relative;';
+    row.dataset.idx = idx;
+
+    const imgPreviewId = `varPrev_${containerId}_${idx}`;
+    const w = prefill ? prefill.weight : '';
+    const p = prefill ? prefill.price : '';
+    const dc = prefill ? prefill.deliveryCharge : '0';
+    const st = prefill ? prefill.stock : '1';
+    const existingImgs = prefill && prefill.images ? prefill.images : [];
+
+    let existingImgHtml = existingImgs.map(src =>
+        `<img src="${src}" style="width:50px;height:50px;object-fit:cover;border-radius:8px;border:1px solid #ddd;" onerror="this.src='/images/placeholder.jpg'">`
+    ).join('');
+
+    row.innerHTML = `
+        <button type="button" onclick="this.closest('.variant-row').remove(); renumberVariants('${containerId}')" 
+                style="position:absolute;top:8px;right:10px;background:none;border:none;font-size:1.1rem;cursor:pointer;color:#e74c3c;padding:0;line-height:1;" title="Remove variant">✕</button>
+        <div style="font-size:0.75rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:0.8rem;">Variant ${idx+1}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0.7rem;margin-bottom:0.8rem;">
+            <div>
+                <label style="font-size:0.78rem;font-weight:700;display:block;margin-bottom:0.25rem;">Weight</label>
+                <input type="text" name="variants[${idx}][weight]" value="${w}" placeholder="e.g. 35kg" required
+                       style="width:100%;padding:0.45rem 0.65rem;border:1.5px solid #dde;border-radius:9px;font-size:0.85rem;box-sizing:border-box;">
+            </div>
+            <div>
+                <label style="font-size:0.78rem;font-weight:700;display:block;margin-bottom:0.25rem;">Price (₹)</label>
+                <input type="number" name="variants[${idx}][price]" value="${p}" placeholder="e.g. 1500" min="0" step="0.01" required
+                       style="width:100%;padding:0.45rem 0.65rem;border:1.5px solid #dde;border-radius:9px;font-size:0.85rem;box-sizing:border-box;">
+            </div>
+            <div>
+                <label style="font-size:0.78rem;font-weight:700;display:block;margin-bottom:0.25rem;">Delivery (₹)</label>
+                <input type="number" name="variants[${idx}][deliveryCharge]" value="${dc}" placeholder="0" min="0" step="0.01"
+                       style="width:100%;padding:0.45rem 0.65rem;border:1.5px solid #dde;border-radius:9px;font-size:0.85rem;box-sizing:border-box;">
+            </div>
+            <div>
+                <label style="font-size:0.78rem;font-weight:700;display:block;margin-bottom:0.25rem;">Stock</label>
+                <input type="number" name="variants[${idx}][stock]" value="${st}" placeholder="1" min="0" required
+                       style="width:100%;padding:0.45rem 0.65rem;border:1.5px solid #dde;border-radius:9px;font-size:0.85rem;box-sizing:border-box;">
+            </div>
+        </div>
+        <div>
+            <label style="font-size:0.78rem;font-weight:700;display:block;margin-bottom:0.25rem;">Images for this weight</label>
+            ${existingImgHtml ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">${existingImgHtml}</div>` : ''}
+            <input type="file" name="variantImages_${idx}" accept="image/*" multiple
+                   onchange="previewImages(this, '${imgPreviewId}')" style="font-size:0.82rem;">
+            <div id="${imgPreviewId}" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;"></div>
+        </div>
+    `;
+    container.appendChild(row);
+}
+
+function renumberVariants(containerId) {
+    // After removal, update visible labels only (names keep original idx — harmless gap)
+    const rows = document.querySelectorAll(`#${containerId} .variant-row`);
+    rows.forEach((row, i) => {
+        const label = row.querySelector('div[style*="Variant"]');
+        if (label) label.textContent = `Variant ${i+1}`;
+    });
+}
+
+// ─── Edit Modal ───────────────────────────────────────────────
+function openEditModal(btn) {
+    const id           = btn.dataset.id;
+    const name         = btn.dataset.name;
+    const category     = btn.dataset.category;
+    const description  = btn.dataset.description;
+    const availability = btn.dataset.availability === 'true';
+    let variants;
+    try { variants = JSON.parse(btn.dataset.variants); } catch(e) { variants = []; }
+
+    const modal = document.getElementById('editModal');
+    const form = document.getElementById('editForm');
+    form.action = '/admin/products/edit/' + id;
+
+    document.getElementById('editName').value = name;
+    document.getElementById('editCategory').value = category;
+    document.getElementById('editDescription').value = description;
+    document.getElementById('editAvailability').checked = availability;
+
+    // Reset variant container
+    const container = document.getElementById('editVariantsContainer');
+    container.innerHTML = '';
+    editVarCount = 0;
+
+    if (variants && variants.length > 0) {
+        variants.forEach(v => addVariantRow('editVariantsContainer', v));
+    } else {
+        addVariantRow('editVariantsContainer'); // at least one empty row
+    }
+
+    modal.style.display = 'block';
+}
+
+function closeEditModal() {
+    document.getElementById('editModal').style.display = 'none';
+    document.getElementById('editVariantsContainer').innerHTML = '';
+    editVarCount = 0;
+}
+
+function previewImages(input, previewId) {
+    const previewContainer = document.getElementById(previewId);
+    if (!previewContainer) return;
+    previewContainer.innerHTML = '';
+    if (input.files) {
+        Array.from(input.files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.style.cssText = 'width:60px;height:60px;object-fit:cover;border-radius:8px;border:1px solid #ddd;';
+                previewContainer.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+}
+
+// Close when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('editModal');
+    if (event.target === modal) modal.style.display = 'none';
+};
+
+// Auto-add one variant row on page load for the Add form
+document.addEventListener('DOMContentLoaded', () => {
+    if (document.getElementById('addVariantsContainer')) {
+        addVariantRow('addVariantsContainer');
+    }
+});
+</script>
+
+<%- include('./partials/admin_footer') %>

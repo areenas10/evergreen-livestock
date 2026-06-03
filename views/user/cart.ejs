@@ -1,0 +1,137 @@
+<%- include('../partials/header') %>
+
+<div class="fk-cart-container" style="min-height: 70vh;">
+    <% if (cart && cart.items.length > 0) { %>
+        <!-- Left Pane: Items -->
+        <div class="fk-cart-left">
+            <div class="fk-cart-header">
+                Shopping Cart (<%= cart.items.length %> Items)
+            </div>
+            
+            <% cart.items.forEach(item => { %>
+                <% if (item.productId) { %>
+                    <% const itemMrp = parseFloat(item.price) / item.quantity * 1.63; %>
+                    <div class="fk-cart-item">
+                        <div class="fk-cart-img-box" style="position: relative; overflow: hidden; width: 250px; height: 250px; flex-shrink: 0; margin-right: 24px; text-align: center; border: 1px solid #eee; border-radius: 4px;">
+                            <% 
+                                let imagesArray = [];
+                                if (item.productId.images && item.productId.images.length > 0) {
+                                    imagesArray = item.productId.images;
+                                } else if (item.productId.image) {
+                                    imagesArray = [item.productId.image];
+                                } else if (item.image) {
+                                    imagesArray = [item.image];
+                                } else {
+                                    imagesArray = ['/images/placeholder.jpg'];
+                                }
+                                let sliderId = 'slider-' + (item.productId._id || item.productId.id);
+                            %>
+                            <div id="<%= sliderId %>" data-current="0" style="display: flex; transition: transform 0.3s ease-in-out; width: 100%; height: 100%;">
+                                <% imagesArray.forEach(imgSrc => { %>
+                                    <img src="<%= imgSrc %>" onerror="this.onerror=null; this.src='/images/placeholder.jpg'" style="min-width: 100%; height: 100%; object-fit: contain;">
+                                <% }) %>
+                            </div>
+                            
+                            <% if (imagesArray.length > 1) { %>
+                                <button type="button" onclick="slideImage('<%= sliderId %>', -1, <%= imagesArray.length %>)" style="position: absolute; left: 0; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; padding: 10px 14px; cursor: pointer; border-radius: 0 4px 4px 0;">&#10094;</button>
+                                <button type="button" onclick="slideImage('<%= sliderId %>', 1, <%= imagesArray.length %>)" style="position: absolute; right: 0; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; padding: 10px 14px; cursor: pointer; border-radius: 4px 0 0 4px;">&#10095;</button>
+                            <% } %>
+                        </div>
+                        
+                        <div class="fk-cart-details">
+                            <h3 class="fk-item-title"><%= item.productId.name %></h3>
+                            <div class="fk-seller">Seller: Evergreen Farm
+                                <% if (item.selectedWeight) { %>
+                                    | <%= item.selectedWeight %>
+                                <% } else if (item.productId.weight) { %>
+                                    | <%= item.productId.weight %>
+                                <% } %>
+                            </div>
+                            
+                            <div class="fk-cart-price-row">
+                                <span class="fk-mrp">₹<%= itemMrp.toLocaleString('en-IN', {maximumFractionDigits:0}) %></span>
+                                <span class="fk-price">₹<%= (parseFloat(item.price) / item.quantity).toFixed(0) %></span>
+                                <span class="fk-discount">63% Off</span>
+                            </div>
+
+                            <div class="fk-cart-actions">
+                                <form action="/user/cart/update" method="POST" class="fk-qty-group">
+                                    <input type="hidden" name="productId" value="<%= item.productId.id || item.productId._id %>">
+                                    <% if (item.selectedWeight) { %>
+                                        <input type="hidden" name="selectedWeight" value="<%= item.selectedWeight %>">
+                                    <% } %>
+                                    <input type="number" name="quantity" value="<%= item.quantity %>" min="1" class="fk-qty-input">
+                                    <button type="submit" class="fk-btn-text" style="font-size: 14px;">Update</button>
+                                </form>
+
+                                <form action="/user/cart/remove" method="POST">
+                                    <input type="hidden" name="productId" value="<%= item.productId.id || item.productId._id %>">
+                                    <% if (item.selectedWeight) { %>
+                                        <input type="hidden" name="selectedWeight" value="<%= item.selectedWeight %>">
+                                    <% } %>
+                                    <button type="submit" class="fk-btn-text">Remove</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                <% } %>
+            <% }) %>
+            
+        </div>
+        
+        <!-- Right Pane: Summary -->
+        <div class="fk-cart-right">
+            <div class="fk-summary-header">
+                <span class="fk-summary-title">Price Details</span>
+            </div>
+            <div class="fk-summary-body">
+                <div class="fk-summary-line">
+                    <span>Price (<%= cart.items.length %> items)</span>
+                    <span>₹<%= (cart.totalPrice * 1.63).toLocaleString('en-IN', {maximumFractionDigits:0}) %></span>
+                </div>
+                <div class="fk-summary-line">
+                    <span>Discount</span>
+                    <span style="color: #388e3c;">- ₹<%= (cart.totalPrice * 0.63).toLocaleString('en-IN', {maximumFractionDigits:0}) %></span>
+                </div>
+                <div class="fk-summary-line">
+                    <span>Delivery Charges</span>
+                    <span style="color: #388e3c;">Free</span>
+                </div>
+                
+                <div class="fk-summary-total">
+                    <span>Total Amount</span>
+                    <span>₹<%= cart.totalPrice.toFixed(2) %></span>
+                </div>
+                
+                <div class="fk-savings" style="margin-bottom: 20px;">
+                    You will save ₹<%= (cart.totalPrice * 0.63).toLocaleString('en-IN', {maximumFractionDigits:0}) %> on this order
+                </div>
+            </div>
+            
+            <div class="fk-place-order-wrap" style="box-shadow: 0 -2px 10px 0 rgba(0,0,0,.05); border-top: 1px solid #f0f0f0; justify-content: center;">
+                <a href="/user/checkout" class="fk-place-order-btn" style="width: 100%; text-align: center;">PLACE ORDER</a>
+            </div>
+        </div>
+    <% } else { %>
+        <div style="width: 100%; text-align: center; background: #fff; padding: 4rem; box-shadow: 0 1px 2px 0 rgba(0,0,0,.2); border-radius: 2px;">
+            <div style="font-size: 5rem; margin-bottom: 24px; color: #ccc;">🛒</div>
+            <h2 style="font-size: 18px; font-weight: 500; margin-bottom: 12px; color: #212121;">Your cart is empty!</h2>
+            <p style="color: #878787; font-size: 14px; margin-bottom: 24px;">Add items to it now.</p>
+            <a href="/products" class="fk-place-order-btn" style="padding: 12px 36px; box-shadow: none;">Shop Now</a>
+        </div>
+    <% } %>
+</div>
+
+<script>
+function slideImage(sliderId, direction, max) {
+    const slider = document.getElementById(sliderId);
+    let current = parseInt(slider.getAttribute('data-current'));
+    current += direction;
+    if (current < 0) current = max - 1;
+    if (current >= max) current = 0;
+    slider.setAttribute('data-current', current);
+    slider.style.transform = `translateX(-${current * 100}%)`;
+}
+</script>
+
+<%- include('../partials/footer') %>

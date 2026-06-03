@@ -1,0 +1,159 @@
+<style>
+    .premium-footer {
+        background: linear-gradient(to right, #0f241a, #1a3c34);
+        color: #fff;
+        padding-top: 5rem;
+        position: relative;
+        overflow: hidden;
+        margin-top: 6rem;
+    }
+    .premium-footer::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 1px;
+        background: linear-gradient(to right, transparent, rgba(197, 224, 99, 0.3), transparent);
+    }
+    .footer-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 4rem;
+        position: relative;
+        z-index: 10;
+        margin-bottom: 4rem;
+    }
+    .footer-brand h3 {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--accent-lime);
+        margin-bottom: 1.2rem;
+        letter-spacing: -0.5px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .footer-brand h3::before {
+        content: '🌿';
+        font-size: 1.5rem;
+    }
+    .footer-brand p {
+        color: rgba(255,255,255,0.7);
+        font-size: 0.95rem;
+        line-height: 1.8;
+    }
+    .footer-heading {
+        color: #fff;
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        position: relative;
+        display: inline-block;
+        letter-spacing: 0.5px;
+    }
+    .footer-heading::after {
+        content: '';
+        position: absolute;
+        left: 0; bottom: -8px;
+        width: 30px; height: 2px;
+        background: var(--accent-lime);
+        border-radius: 2px;
+    }
+    .footer-contact li {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.2rem;
+        color: rgba(255,255,255,0.7);
+        font-size: 0.95rem;
+        transition: 0.3s;
+    }
+    .footer-contact li a {
+        color: rgba(255,255,255,0.7);
+        text-decoration: none;
+        transition: color 0.3s;
+    }
+    .footer-contact li a:hover {
+        color: var(--accent-lime);
+        transform: translateX(5px);
+        display: inline-block;
+    }
+    .footer-contact li .icon-wrapper {
+        width: 36px; height: 36px;
+        background: rgba(255,255,255,0.05);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        border: 1px solid rgba(255,255,255,0.05);
+        transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .footer-contact li:hover .icon-wrapper {
+        background: var(--accent-lime);
+        color: var(--primary-green);
+        transform: scale(1.1) rotate(10deg);
+        border-color: var(--accent-lime);
+    }
+    .footer-bottom {
+        text-align: center;
+        padding: 2rem 0;
+        border-top: 1px solid rgba(255,255,255,0.08);
+        color: rgba(255,255,255,0.5);
+        font-size: 0.85rem;
+    }
+    .footer-blob {
+        position: absolute;
+        width: 400px; height: 400px;
+        background: radial-gradient(circle, rgba(197, 224, 99, 0.05) 0%, transparent 70%);
+        border-radius: 50%;
+        top: -100px; right: -100px;
+        pointer-events: none;
+    }
+</style>
+
+<footer class="premium-footer">
+    <div class="footer-blob"></div>
+    <div class="container">
+        <div class="footer-grid">
+            <div class="footer-brand">
+                <h3>Evergreen Livestock</h3>
+                <p>Ethical husbandry and ethical livestock management for a healthier tomorrow. We are committed to delivering the highest quality straight from our natural farm.</p>
+            </div>
+            
+            <div>
+                <h4 class="footer-heading">Quick Links</h4>
+                <ul class="footer-contact" style="list-style: none; padding: 0;">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/products">Marketplace</a></li>
+                    <li><a href="/about">Our Story</a></li>
+                    <li><a href="/contact">Get in Touch</a></li>
+                </ul>
+            </div>
+            
+            <div>
+                <h4 class="footer-heading">Contact Us</h4>
+                <ul class="footer-contact" style="list-style: none; padding: 0;">
+                    <li>
+                        <div class="icon-wrapper">📍</div>
+                        <span>Farm Gate No. 4, Green Valley</span>
+                    </li>
+                    <li>
+                        <div class="icon-wrapper">📞</div>
+                        <span>+1 (234) 567-890</span>
+                    </li>
+                    <li>
+                        <div class="icon-wrapper">✉️</div>
+                        <span><a href="mailto:hello@evergreen.farm">hello@evergreen.farm</a></span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <p>&copy; <%= new Date().getFullYear() %> Evergreen Livestock. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
+<script src="/js/main.js"></script>
+</body>
+</html>
