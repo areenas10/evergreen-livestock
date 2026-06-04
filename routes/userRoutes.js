@@ -8,6 +8,7 @@ const { isUserAuth } = require('../middleware/authMiddleware');
 router.post('/buy-now', orderController.buyNow);
 router.get('/checkout', orderController.getCheckout);
 router.post('/checkout', orderController.placeOrder);
+router.get('/order-confirmation/:orderId', orderController.getOrderConfirmation);
 router.get('/payment/:orderId', orderController.getPaymentPage);
 router.post('/payment/:orderId', orderController.processPayment);
 

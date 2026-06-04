@@ -1,0 +1,299 @@
+<%- include('../partials/header') %>
+
+<style>
+.confirmation-container {
+    max-width: 680px;
+    margin: 3rem auto;
+    padding: 0 1rem;
+}
+.confirmation-card {
+    background: #fff;
+    border-radius: 24px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    overflow: hidden;
+    animation: slideUp 0.5s ease;
+}
+.confirmation-header {
+    background: linear-gradient(135deg, #27ae60, #1a8a4a);
+    padding: 2.5rem 2rem;
+    text-align: center;
+    color: #fff;
+}
+.confirmation-header .check-icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 2.5rem;
+    animation: bounceIn 0.6s ease 0.2s both;
+}
+.confirmation-header h1 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-bottom: 0.3rem;
+}
+.confirmation-header p {
+    opacity: 0.9;
+    font-size: 1rem;
+}
+.confirmation-body {
+    padding: 2rem;
+}
+.order-id-badge {
+    background: #f0faf4;
+    border: 2px dashed #27ae60;
+    border-radius: 14px;
+    padding: 1rem 1.5rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+.order-id-badge span {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-muted, #64748b);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.order-id-badge h2 {
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: #27ae60;
+    margin-top: 0.3rem;
+    letter-spacing: 2px;
+}
+.detail-section {
+    margin-bottom: 1.5rem;
+}
+.detail-section h3 {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--text-muted, #64748b);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid #f5f5f5;
+    font-size: 0.95rem;
+}
+.detail-row:last-child {
+    border-bottom: none;
+}
+.detail-row .label {
+    color: var(--text-muted, #64748b);
+    font-weight: 600;
+}
+.detail-row .value {
+    font-weight: 700;
+    color: var(--text-main, #1e293b);
+}
+.items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+.order-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.8rem;
+    background: #fafafa;
+    border-radius: 12px;
+}
+.order-item img {
+    width: 56px;
+    height: 56px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid #eee;
+}
+.order-item-info {
+    flex: 1;
+}
+.order-item-info h4 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+.order-item-info span {
+    font-size: 0.82rem;
+    color: var(--text-muted, #64748b);
+}
+.order-item-price {
+    font-weight: 800;
+    color: #27ae60;
+    font-size: 1rem;
+}
+.total-section {
+    background: #f0faf4;
+    border-radius: 14px;
+    padding: 1.2rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+}
+.total-section .total-label {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+.total-section .total-value {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #27ae60;
+}
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+.status-pending {
+    background: #fff3e0;
+    color: #e65100;
+}
+.status-paid {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+.confirmation-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+.confirmation-actions a {
+    flex: 1;
+    text-align: center;
+    padding: 0.9rem;
+    border-radius: 14px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+.btn-primary-action {
+    background: #27ae60;
+    color: #fff;
+}
+.btn-primary-action:hover {
+    background: #219653;
+    transform: translateY(-1px);
+}
+.btn-secondary-action {
+    background: #f5f5f5;
+    color: var(--text-main, #1e293b);
+}
+.btn-secondary-action:hover {
+    background: #eee;
+}
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes bounceIn {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+</style>
+
+<div class="confirmation-container">
+    <div class="confirmation-card">
+        <div class="confirmation-header">
+            <div class="check-icon">✓</div>
+            <h1>Order Placed Successfully!</h1>
+            <p>Thank you for your purchase from Evergreen Farm</p>
+        </div>
+
+        <div class="confirmation-body">
+            <!-- Order ID -->
+            <div class="order-id-badge">
+                <span>Your Order ID</span>
+                <h2><%= order.orderId %></h2>
+            </div>
+
+            <!-- Order Items -->
+            <div class="detail-section">
+                <h3>🛒 Items Ordered</h3>
+                <div class="items-list">
+                    <% order.items.forEach(item => { %>
+                        <div class="order-item">
+                            <img src="<%= item.image || '/images/placeholder.jpg' %>" onerror="this.src='/images/placeholder.jpg'" alt="Product">
+                            <div class="order-item-info">
+                                <h4><%= item.selectedWeight || 'Product' %></h4>
+                                <span>Qty: <%= item.quantity %></span>
+                            </div>
+                            <div class="order-item-price">₹<%= parseFloat(item.price).toLocaleString('en-IN') %></div>
+                        </div>
+                    <% }) %>
+                </div>
+            </div>
+
+            <!-- Delivery Details -->
+            <div class="detail-section">
+                <h3>🚚 Delivery</h3>
+                <div class="detail-row">
+                    <span class="label">Method</span>
+                    <span class="value"><%= order.delivery_method %></span>
+                </div>
+                <% if (order.address) { %>
+                <div class="detail-row">
+                    <span class="label">Address</span>
+                    <span class="value" style="text-align: right; max-width: 60%;"><%= order.address %></span>
+                </div>
+                <% } %>
+                <div class="detail-row">
+                    <span class="label">Phone</span>
+                    <span class="value"><%= order.phone %></span>
+                </div>
+            </div>
+
+            <!-- Payment Details -->
+            <div class="detail-section">
+                <h3>💳 Payment</h3>
+                <div class="detail-row">
+                    <span class="label">Method</span>
+                    <span class="value"><%= order.payment_details ? order.payment_details.method : 'Not specified' %></span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Status</span>
+                    <span class="status-badge <%= order.payment_status === 'Paid' ? 'status-paid' : 'status-pending' %>">
+                        <%= order.payment_status === 'Paid' ? '✓ Paid' : '⏳ Pending' %>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Total -->
+            <div class="total-section">
+                <span class="total-label">Total Amount</span>
+                <span class="total-value">₹<%= parseFloat(order.total_amount).toLocaleString('en-IN') %></span>
+            </div>
+
+            <!-- Actions -->
+            <div class="confirmation-actions">
+                <a href="/products" class="btn-secondary-action">Continue Shopping</a>
+                <% if (isLoggedIn) { %>
+                    <a href="/user/dashboard" class="btn-primary-action">View My Orders</a>
+                <% } else { %>
+                    <a href="/" class="btn-primary-action">Back to Home</a>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

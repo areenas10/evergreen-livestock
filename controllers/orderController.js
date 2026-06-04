@@ -290,12 +290,8 @@ const placeOrder = async (req, res) => {
             }
         }
 
-        // Redirect logged-in users to dashboard, guests to a confirmation page
-        if (userId) {
-            res.redirect('/user/dashboard');
-        } else {
-            res.redirect(`/user/payment/${savedOrder._id}?guest=true`);
-        }
+        // Redirect all users to the order confirmation page
+        res.redirect(`/user/order-confirmation/${savedOrder._id}`);
     } catch (err) {
         console.error(err);
         res.redirect('/user/checkout');
@@ -364,15 +360,36 @@ const buyNow = async (req, res) => {
     }
 };
 
+const getOrderConfirmation = async (req, res) => {
+    try {
+        const order = await Order.findById(req.params.orderId);
+        if (!order) return res.redirect('/');
+
+        // Allow access for the order owner or any user who just placed it (via session)
+        const isOwner = req.session.user && order.userId && order.userId.toString() === req.session.user.id;
+        const isGuest = !order.userId;
+        if (!isOwner && !isGuest) {
+            return res.redirect('/');
+        }
+        res.render('user/order_confirmation', {
+            title: 'Order Confirmed - Evergreen Livestock',
+            order,
+            isLoggedIn: !!req.session.user
+        });
+    } catch (err) {
+        console.error(err);
+        res.redirect('/');
+    }
+};
+
 const getPaymentPage = async (req, res) => {
     try {
         const order = await Order.findById(req.params.orderId);
         if (!order) return res.redirect('/');
 
-        // Allow access for guests (via query param) or matching logged-in user
-        const isGuest = req.query.guest === 'true';
         const isOwner = req.session.user && order.userId && order.userId.toString() === req.session.user.id;
-        if (!isGuest && !isOwner) {
+        const isGuest = !order.userId;
+        if (!isOwner && !isGuest) {
             return res.redirect('/');
         }
         res.render('user/payment', { title: 'Payment', order });
@@ -411,6 +428,7 @@ module.exports = {
     getUserDashboard,
     getCheckout,
     placeOrder,
+    getOrderConfirmation,
     getPaymentPage,
     processPayment,
     buyNow
