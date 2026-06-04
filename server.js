@@ -36,7 +36,7 @@ app.use(session({
     saveUninitialized: false,
     name: 'evergreen_sid',
     store: MongoStore.create({ 
-        mongoUrl: process.env.MONGODB_URI,
+        mongoUrl: process.env.MONGODB_URI || 'mongodb://localhost:27017/evergreen_livestock',
         collectionName: 'sessions',
         ttl: 14 * 24 * 60 * 60 // 14 days
     }),
