@@ -27,12 +27,19 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+const MongoStore = require('connect-mongo');
+
 // Session Configuration (Unified — browser tabs share cookies)
 app.use(session({
     secret: process.env.SESSION_SECRET || 'evergreen_secret_key',
     resave: false,
     saveUninitialized: false,
     name: 'evergreen_sid',
+    store: MongoStore.create({ 
+        mongoUrl: process.env.MONGODB_URI,
+        collectionName: 'sessions',
+        ttl: 14 * 24 * 60 * 60 // 14 days
+    }),
     cookie: { secure: false } // In production use true for https
 }));
 
